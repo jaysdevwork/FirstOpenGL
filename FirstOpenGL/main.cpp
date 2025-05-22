@@ -80,6 +80,11 @@ int main()
 
     // ALL OF THIS MUST COME AFTER INIT GLFW AND GLAD
 
+    // create shader object: reads from disk, compiles, links, and checks for errors for vertex and fragment shaders
+    // this encapsulates alot of code
+    Shader ourShader("C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/shader.vs",
+        "C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/shader.fs");
+    
 
     // create a vertex array object to store configuration
     // i.e. vertex attribute config and which vbo to use
@@ -92,17 +97,11 @@ int main()
     glGenBuffers(1, &VBO);
     // bind buffer to buffer type
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    // from this point on any buffer calls make on GL_ARRAY_BUffer target will be used to config the currently
+    // from this point on any buffer calls make on GL_ARRAY_BUFFER target will be used to config the currently
     // bound buffer, VBO
     // copy vertex data into currently bound buffer memory
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-
-    // create shader object: reads from disk, compiles, links, and checks for errors for vertex and fragment shaders
-    // this encapsulates alot of code
-    Shader ourShader("C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/shader.vs",
-        "C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/shader.fs");
 
     // specify how opengl should interpret vertex data
     // tells opengl how to link vertex data to the vertex shader's shader attributes
@@ -129,6 +128,12 @@ int main()
         // activate program. every rendering call after will now use this program
         // object and thus the shaders
         ourShader.use();
+        float timeValue = glfwGetTime();
+        float xOffset = (sin(timeValue) / 2.0f) + 0.5f;
+        ourShader.setFloat("offsetX", xOffset);
+
+        // angle gets infinitely larger
+        ourShader.setFloat("rotAngle", timeValue);
 
         
 
@@ -143,8 +148,6 @@ int main()
         // soon as rendering cmds are finished, swap back buffer to front so img can be displayed without still being rendered to
         glfwSwapBuffers(window);
         glfwPollEvents(); // check if any events triggered, like keyboard input. calling corresponding functs
-
-
     }
 
     // delete all glfw resources that were allocated, soon as exit render loop.
