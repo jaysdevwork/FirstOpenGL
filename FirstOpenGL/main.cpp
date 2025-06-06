@@ -4,6 +4,14 @@
 #include <GLFW/glfw3.h> // gives bare necessities for rendering to screen
 #include <iostream>
 #include "Shader.h"
+#include "stb_image.h"
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+
+float mixValue = 0.2f; // value to mix between two textures, used in shader
 
 // three vertices for triange
 float vertices[] = {
@@ -14,18 +22,27 @@ float vertices[] = {
 };
 
 // unique vertices of rectangle
-float uniqueVertices[] =
-{
-    0.5f, 0.5f, 0.0f,
-    0.5f, -0.5f, 0.0f,
-    -0.5f, -0.5f, 0.0f,
-    -0.5f, 0.5f, 0.0f
+//  storing two vec3 vertex attributes, position, color, texture coords
+float uniqueVertices[] = {
+    // positions         // colors          // texture coords
+     0.5f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f,  // top right - red
+     0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,  1.0f, 0.0f, // bottom right - green
+    -0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f,// bottom left - blue
+    -0.5f,  0.5f, 0.0f,  1.0f, 1.0f, 0.0f,  0.0f, 1.0f// top left - yellow
 };
+
 // index order to draw them
-unsigned int indicies[] =
+unsigned int indices[] =
 {
     0, 1, 3,
     1, 2, 3
+};
+
+float texCoords[] =
+{
+    0.0f, 0.0f, // lower left corner
+    1.0f, 0.0f, // lower right corner
+    0.5f, 1.0f // top center corner
 };
 
 
@@ -35,8 +52,9 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     // tell opengl size of rendering windows. 
     // set equal to glfw window size
-    glViewport(0, 0, width, height);
+    glViewport(0, 0, width, height); // start at bottom left corner, draw area is width * height long. map ndc to pixel coordinates
 }
+
 
 void processInput(GLFWwindow* window)
 {
@@ -44,7 +62,22 @@ void processInput(GLFWwindow* window)
     {
         glfwSetWindowShouldClose(window, true); // returns whether key currently being pressed
     }
+
+
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+	{
+		mixValue += 0.001f; // increase mix value
+		if (mixValue >= 1.0f) mixValue = 1.0f; // clamp to max value
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+	{
+		mixValue -= 0.001f; // decrease mix value
+		if (mixValue <= 0.0f) mixValue = 0.0f; // clamp to min value
+	}
+
 }
+
 
 int main()
 {
@@ -78,8 +111,52 @@ int main()
         return -1;
     }
 
-    // ALL OF THIS MUST COME AFTER INIT GLFW AND GLAD
+   
+    // setup textures
+    unsigned int texture[2];
+    glGenTextures(2, texture); // generate two texture ids
+    // just like other objects, bind so any subsequent texture commands config curr bound txture
+    glBindTexture(GL_TEXTURE_2D, texture[0]);
+    // set texture wrapping/filtering options on currently bound txture obj
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST); // option for txture filtering between mipmap levels
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // cant set mipmap filtering options as mag filter
+    // LOAD IMAGE using stb_image library
+    int width, height, nrChannels;
+    unsigned char* data = stbi_load("C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/Resources/container.jpg", &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        // generate texture
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    } 
+    else 
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data); // free image memory
 
+    // setup texture 2
+    glBindTexture(GL_TEXTURE_2D, texture[1]);
+    // set texture wrapping/filtering options on currently bound txture obj
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST); // option for txture filtering between mipmap levels
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // cant set mipmap filtering options as mag filter
+    // LOAD IMAGE 2
+    stbi_set_flip_vertically_on_load(true); // flip y axis during image loading bc image has 0 for y as top
+    unsigned char* data2 = stbi_load("C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/Resources/awesomeface.png", &width, &height, &nrChannels, 0);
+    if (data2)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data2);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    stbi_image_free(data2); // free image memory
+
+
+
+    // ALL OF THIS MUST COME AFTER INIT GLFW AND GLAD!!
     // create shader object: reads from disk, compiles, links, and checks for errors for vertex and fragment shaders
     // this encapsulates alot of code
     Shader ourShader("C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/shader.vs",
@@ -100,19 +177,52 @@ int main()
     // from this point on any buffer calls make on GL_ARRAY_BUFFER target will be used to config the currently
     // bound buffer, VBO
     // copy vertex data into currently bound buffer memory
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(uniqueVertices), uniqueVertices, GL_STATIC_DRAW);
+
+    // specify order to draw vertices in with a element buffer object
+    unsigned int EBO;
+    glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 
     // specify how opengl should interpret vertex data
     // tells opengl how to link vertex data to the vertex shader's shader attributes
     // vbo bound to gl_array_buffer, so vertex attribute 0 now assoc with its vertex data
     // POSITION ATTRIBUTE
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0); // 1st param is LOCATION in vertex shader to pass to
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // 1st param is LOCATION in vertex shader to pass to
     glEnableVertexAttribArray(0);
     // COLOR ATTRIBUTE
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3*sizeof(float))); // last param is offset to place after pos data in VBO memory
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float))); // last param is offset to place after pos data in VBO memory
     glEnableVertexAttribArray(1);
+    // TEXTURE COORDINATE ATTRIBUTE 
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
 
+
+
+    // tell opengl which texture unit (location of a texture) each shader sample uniform belongs to. need only do once
+    ourShader.use();
+    ourShader.setInt("texture1", 0); // 0 is corresponding texture unit of texture[0]. texture1 is sampler var name
+    ourShader.setInt("texture2", 1);
+
+
+    // old glm learning code
+    //glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
+    //glm::mat4 trans = glm::mat4(1.0f); // init to identity matrix
+    //trans = glm::translate(trans, glm::vec3(1.0f, 1.0f, 0.0f)); // vec is what we want to translate by
+    //vec = trans * vec;
+    //std::cout << vec.x << vec.y << vec.z << std::endl;
+    //glm::mat4 trans = glm::mat4(1.0f);
+    // transformation order should be read in reverse
+    //trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
+    //trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.05));
+    //unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
+    //glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans)); // last param convert data with glm's function
+
+
+    float vis = 0.2f;
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); wireframe mode
     // render loop!- iteration of render loop called a FRAME
     // so app keeps drawing images and handle input until told to stop
     while (!glfwWindowShouldClose(window)) // checks if glfw has been told to close
@@ -131,15 +241,42 @@ int main()
         float timeValue = glfwGetTime();
         float xOffset = (sin(timeValue) / 2.0f) + 0.5f;
         ourShader.setFloat("offsetX", xOffset);
-
         // angle gets infinitely larger
         ourShader.setFloat("rotAngle", timeValue);
+		// set mix value in shader
+        ourShader.setFloat("visVal", mixValue);
+
+        glm::mat4 trans = glm::mat4(1.0f); // identity matrix
+        // remember, actual transformation order read in reverse
+        // must always be scale, rotate, translate order
+        trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f)); // rot around z axis over time
 
         
+        unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans)); // last param convert data with glm's function
+
+        
+        // bind texture, using texture unit (location of a texture)
+        glActiveTexture(GL_TEXTURE0); // activate texture unit first before binding texture
+        glBindTexture(GL_TEXTURE_2D, texture[0]);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture[1]);
+
 
         // bind vao for drawing triangle
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+
+        // FOR SECOND BOX AND TRANSFORMATION
+        trans = glm::mat4(1.0f); // reset to identity matrix
+        trans = glm::translate(trans, glm::vec3(-0.5f, 0.5f, 0.0f));
+        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f)); // rot around z axis over time
+        float scaleValue = (sin((float)glfwGetTime()) + 1.0f) * 0.5f + 0.5f; // just scale mapping from base -1-1 to 0.5-1.5
+        trans = glm::scale(trans, glm::vec3(scaleValue, scaleValue, 1.0f));
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans)); // last param convert data with glm's function
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 
         // CHECK AND CALL EVENTS AND SWAP BUFFERS:
