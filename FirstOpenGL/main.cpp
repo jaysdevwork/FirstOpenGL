@@ -308,23 +308,15 @@ int main()
         // adjust transition between the 2 textures
         ourShader.setFloat("visVal", mixValue);
 
-
-        // model matrix, translations, scaling, rots to transform vertex coords to world coords 
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
         // view matrix, move backwards in scene by moving entire scene forward (-z axis bc right-handed system)
         glm::mat4 view = glm::mat4(1.0f);
         view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
         // projection matrix
         glm::mat4 projection;
         projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-
-        ourShader.setMat("model", model);
         ourShader.setMat("view", view);
         ourShader.setMat("projection", projection);
 
-
-        
         // bind texture, using texture unit (location of a texture)
         glActiveTexture(GL_TEXTURE0); // activate texture unit first before binding texture
         glBindTexture(GL_TEXTURE_2D, texture[0]);
@@ -333,20 +325,24 @@ int main()
 
         // bind vao for drawing triangle
         glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        for (unsigned int i = 0; i < 10; i++)
+        {
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, cubePositions[i]);
+            float angle = 20.0f * i;
+            angle = glm::radians(angle);
+
+            if (i % 3 == 0)
+            {
+                angle = (float)glfwGetTime() * 25.0f;
+            }
+            model = glm::rotate(model, angle, glm::vec3(1.0f, 0.3f, 0.05f)); // rot at angle degrees a second
+            ourShader.setMat("model", model);
+            
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
 
 
-        //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-
-        // FOR SECOND BOX AND TRANSFORMATION
-        //trans = glm::mat4(1.0f); // reset to identity matrix
-        //trans = glm::translate(trans, glm::vec3(-0.5f, 0.5f, 0.0f));
-        //trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f)); // rot around z axis over time
-        //float scaleValue = (sin((float)glfwGetTime()) + 1.0f) * 0.5f + 0.5f; // just scale mapping from base -1-1 to 0.5-1.5
-        //trans = glm::scale(trans, glm::vec3(scaleValue, scaleValue, 1.0f));
-        //glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans)); // last param convert data with glm's function
-        //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 
         // CHECK AND CALL EVENTS AND SWAP BUFFERS:
