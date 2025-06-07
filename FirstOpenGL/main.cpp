@@ -23,12 +23,74 @@ float vertices[] = {
 
 // unique vertices of rectangle
 //  storing two vec3 vertex attributes, position, color, texture coords
+//float uniqueVertices[] = {
+//    // positions         // colors          // texture coords
+//     0.5f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f,  // top right - red
+//     0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,  1.0f, 0.0f, // bottom right - green
+//    -0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f,// bottom left - blue
+//    -0.5f,  0.5f, 0.0f,  1.0f, 1.0f, 0.0f,  0.0f, 1.0f// top left - yellow
+//};
 float uniqueVertices[] = {
-    // positions         // colors          // texture coords
-     0.5f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f,  // top right - red
-     0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,  1.0f, 0.0f, // bottom right - green
-    -0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f,// bottom left - blue
-    -0.5f,  0.5f, 0.0f,  1.0f, 1.0f, 0.0f,  0.0f, 1.0f// top left - yellow
+    // Back face (red tones)
+    -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,  0.8f, 0.2f, 0.0f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.2f,  1.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.2f,  1.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,  0.9f, 0.1f, 0.1f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+
+    // Front face (green tones)
+    -0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  0.2f, 0.8f, 0.0f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.2f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.2f,  1.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.1f, 0.9f, 0.1f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
+
+    // Left face (blue tones)
+    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  1.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  0.2f, 0.0f, 0.8f,  1.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.2f, 1.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, 0.2f, 1.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.1f, 0.1f, 0.9f,  0.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  1.0f, 0.0f,
+
+    // Right face (yellow tones)
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  0.8f, 0.8f, 0.2f,  1.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 0.8f, 0.0f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f, 0.8f, 0.0f,  0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  0.9f, 0.9f, 0.1f,  0.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,  1.0f, 0.0f,
+
+     // Bottom face (purple tones)
+     -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 1.0f,  0.0f, 1.0f,
+      0.5f, -0.5f, -0.5f,  0.8f, 0.2f, 0.8f,  1.0f, 1.0f,
+      0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.8f,  1.0f, 0.0f,
+      0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.8f,  1.0f, 0.0f,
+     -0.5f, -0.5f,  0.5f,  0.9f, 0.1f, 0.9f,  0.0f, 0.0f,
+     -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 1.0f,  0.0f, 1.0f,
+
+     // Top face (cyan tones)
+     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 1.0f,  0.0f, 1.0f,
+      0.5f,  0.5f, -0.5f,  0.2f, 0.8f, 0.8f,  1.0f, 1.0f,
+      0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.8f,  1.0f, 0.0f,
+      0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.8f,  1.0f, 0.0f,
+     -0.5f,  0.5f,  0.5f,  0.1f, 0.9f, 0.9f,  0.0f, 0.0f,
+     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 1.0f,  0.0f, 1.0f
+};
+
+glm::vec3 cubePositions[] = {
+    glm::vec3(0.0f,  0.0f,  0.0f),
+    glm::vec3(2.0f,  5.0f, -15.0f),
+    glm::vec3(-1.5f, -2.2f, -2.5f),
+    glm::vec3(-3.8f, -2.0f, -12.3f),
+    glm::vec3(2.4f, -0.4f, -3.5f),
+    glm::vec3(-1.7f,  3.0f, -7.5f),
+    glm::vec3(1.3f, -2.0f, -2.5f),
+    glm::vec3(1.5f,  2.0f, -2.5f),
+    glm::vec3(1.5f,  0.2f, -1.5f),
+    glm::vec3(-1.3f,  1.0f, -1.5f)
 };
 
 // index order to draw them
@@ -222,6 +284,7 @@ int main()
 
 
     float vis = 0.2f;
+    glEnable(GL_DEPTH_TEST);
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); wireframe mode
     // render loop!- iteration of render loop called a FRAME
     // so app keeps drawing images and handle input until told to stop
@@ -233,28 +296,33 @@ int main()
         // RENDERING COMMANDS HERE:
         // clear screens color buffer at START of frame
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f); // whenever call glClear, filled with color configured here. STATE-SETTING
-        glClear(GL_COLOR_BUFFER_BIT); // specifcied color buffer. STATE-USING (uses curr state to retrieve clearing color from)
+        
+        //clear depth and color buffers beach each rendering iteration, otherwise info from previous frame stays in buffer
+        // bitwise flag used to combine into one value
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // specifcied color buffer. STATE-USING (uses curr state to retrieve clearing color from)
 
         // activate program. every rendering call after will now use this program
         // object and thus the shaders
         ourShader.use();
-        float timeValue = glfwGetTime();
-        float xOffset = (sin(timeValue) / 2.0f) + 0.5f;
-        ourShader.setFloat("offsetX", xOffset);
-        // angle gets infinitely larger
-        ourShader.setFloat("rotAngle", timeValue);
-		// set mix value in shader
+
+        // adjust transition between the 2 textures
         ourShader.setFloat("visVal", mixValue);
 
-        glm::mat4 trans = glm::mat4(1.0f); // identity matrix
-        // remember, actual transformation order read in reverse
-        // must always be scale, rotate, translate order
-        trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
-        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f)); // rot around z axis over time
 
-        
-        unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans)); // last param convert data with glm's function
+        // model matrix, translations, scaling, rots to transform vertex coords to world coords 
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+        // view matrix, move backwards in scene by moving entire scene forward (-z axis bc right-handed system)
+        glm::mat4 view = glm::mat4(1.0f);
+        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        // projection matrix
+        glm::mat4 projection;
+        projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+
+        ourShader.setMat("model", model);
+        ourShader.setMat("view", view);
+        ourShader.setMat("projection", projection);
+
 
         
         // bind texture, using texture unit (location of a texture)
@@ -263,20 +331,22 @@ int main()
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture[1]);
 
-
         // bind vao for drawing triangle
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
+        //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 
         // FOR SECOND BOX AND TRANSFORMATION
-        trans = glm::mat4(1.0f); // reset to identity matrix
-        trans = glm::translate(trans, glm::vec3(-0.5f, 0.5f, 0.0f));
-        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f)); // rot around z axis over time
-        float scaleValue = (sin((float)glfwGetTime()) + 1.0f) * 0.5f + 0.5f; // just scale mapping from base -1-1 to 0.5-1.5
-        trans = glm::scale(trans, glm::vec3(scaleValue, scaleValue, 1.0f));
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans)); // last param convert data with glm's function
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        //trans = glm::mat4(1.0f); // reset to identity matrix
+        //trans = glm::translate(trans, glm::vec3(-0.5f, 0.5f, 0.0f));
+        //trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f)); // rot around z axis over time
+        //float scaleValue = (sin((float)glfwGetTime()) + 1.0f) * 0.5f + 0.5f; // just scale mapping from base -1-1 to 0.5-1.5
+        //trans = glm::scale(trans, glm::vec3(scaleValue, scaleValue, 1.0f));
+        //glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans)); // last param convert data with glm's function
+        //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 
         // CHECK AND CALL EVENTS AND SWAP BUFFERS:

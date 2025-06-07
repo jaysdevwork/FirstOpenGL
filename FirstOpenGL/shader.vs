@@ -6,28 +6,16 @@ layout (location = 2) in vec2 aTexCoord;
 out vec3 ourColor; // output a color to fragment shader
 out vec2 TexCoord; // for forwarding coords to fragment shader
 
-uniform float offsetX;
-uniform float rotAngle;
 
-uniform mat4 transform;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 
 void main()
 {
-    // rotation transformation matrix around the x axis
-    mat3 rotX = mat3(
-        1.0, 0.0, 0.0,                              // First column
-        0.0, cos(rotAngle), sin(rotAngle),  // Second column
-        0.0, -sin(rotAngle), cos(rotAngle)  // Third column
-    );
-    
-    // mult rotation matrix by position
-    vec3 rotatedPos = rotX * aPos;
+    gl_Position = projection * view * model * vec4(aPos, 1.0f); // read mult from right to lefts
 
-    gl_Position = transform * vec4(aPos, 1.0f);
-    //gl_Position = vec4(rotatedPos.x + offsetX, rotatedPos.y, rotatedPos.z, 1.0); // can go aPos alone since vec3 or indivually .x,.y, .z FOR LIVE ROT
-    //gl_Position = vec4(aPos, 1.0);
-
-    ourColor = aColor; // set ourColor to the input color got from vertex data (for rainbow)
-    //ourColor = aPos;
+   
+    //ourColor = aColor; // set ourColor to the input color got from vertex data (for rainbow)
     TexCoord = aTexCoord; 
 }

@@ -18,5 +18,5 @@ void main()
     
     // final output color is combo of 2 txture look ups. 
     // 3rd param as 0.2 returns 80% of first input color
-    FragColor = mix(texture(texture1, TexCoord), texture(texture2, vec2(1.0 - TexCoord.x, TexCoord.y)), visVal); // invert x axis
+    FragColor = mix(texture(texture1, TexCoord), texture(texture2, vec2(1.0 - TexCoord.x, TexCoord.y)), visVal); //* vec4(ourColor, 1.0); // invert x axis
 }
