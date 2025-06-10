@@ -108,6 +108,7 @@ float texCoords[] =
 };
 
 
+
 // callback function called each time window resize to adjust viewport
 // glfw calls and fills proper arguments on its own once binded
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -309,11 +310,16 @@ int main()
         ourShader.setFloat("visVal", mixValue);
 
         // view matrix, move backwards in scene by moving entire scene forward (-z axis bc right-handed system)
-        glm::mat4 view = glm::mat4(1.0f);
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        const float radius = 5.0f;
+        float camX = sin(glfwGetTime()) * radius;
+        float camZ = cos(glfwGetTime()) * radius;
+        glm::mat4 view;
+        view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+
+
         // projection matrix
         glm::mat4 projection;
-        projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(45.0f), 16.0f/9.0f, 0.1f, 100.0f);
         ourShader.setMat("view", view);
         ourShader.setMat("projection", projection);
 
@@ -334,7 +340,7 @@ int main()
 
             if (i % 3 == 0)
             {
-                angle = (float)glfwGetTime() * 25.0f;
+                angle = (float)glfwGetTime() * 10.0f;
             }
             model = glm::rotate(model, angle, glm::vec3(1.0f, 0.3f, 0.05f)); // rot at angle degrees a second
             ourShader.setMat("model", model);
