@@ -11,6 +11,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 
+
 float mixValue = 0.2f; // value to mix between two textures, used in shader
 
 // three vertices for triange
@@ -107,7 +108,12 @@ float texCoords[] =
     0.5f, 1.0f // top center corner
 };
 
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0);
 
+float deltaTime = 0.0f; // Time between current frame and last frame
+float lastFrame = 0.0f; // Time of last frame
 
 // callback function called each time window resize to adjust viewport
 // glfw calls and fills proper arguments on its own once binded
@@ -118,6 +124,56 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height); // start at bottom left corner, draw area is width * height long. map ndc to pixel coordinates
 }
 
+/**
+    Obtain yaw and pitch values by getting difference between current frame mouse pos
+    and las frame mouse pos.
+*/
+// used for camera's direction vec
+float yaw = -90.0f, pitch; // pos degrees rot counter-clockwise, neg clockwise
+// last mouse pos, center of screen
+float lastX = 400, lastY = 300;
+// prevent large movement jump upon mouse first entering window
+bool firstMouse = true;
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) // tell glfw to listen to mouse-movement events.
+{   
+    // bascially makes the offset 0 so no movement upon mouse first entering
+    if (firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xOffset = xpos - lastX;
+    float yOffset = lastY - ypos; // reversed since y-coords range from bottom to top
+    lastX = xpos;
+    lastY = ypos;
+
+    const float sensitivity = 0.1f;
+    xOffset *= sensitivity;
+    yOffset *= sensitivity;
+
+    yaw += xOffset;
+    pitch += yOffset;
+
+    if (pitch > 89.0f)
+    {
+        pitch = 89.0f;
+    }
+
+    if (pitch < -89.0f)
+    {
+        pitch = -89.0f;
+    }
+
+    // include all rots calculated from mouse's movement
+    // formula is one using right triangles
+    glm::vec3 direction;
+    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    direction.y = sin(glm::radians(pitch));
+    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    cameraFront = glm::normalize(direction);
+}
 
 void processInput(GLFWwindow* window)
 {
@@ -138,6 +194,28 @@ void processInput(GLFWwindow* window)
 		mixValue -= 0.001f; // decrease mix value
 		if (mixValue <= 0.0f) mixValue = 0.0f; // clamp to min value
 	}
+
+    // For moving camera pos
+    const float cameraSpeed = 2.5f * deltaTime;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    {
+        cameraPos += cameraSpeed * cameraFront;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    {
+        cameraPos -= cameraSpeed * cameraFront;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    {
+        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed; // cross product normalized gives us pos x axis unit vec
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    {
+        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    }
 
 }
 
@@ -165,6 +243,10 @@ int main()
     // register function for window resize
     // IMPORTANT: register callback functions after created window and before render loop is initiated
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+    // register callback function- making it so each time mouse moves mouse_callback funct is called
+    glfwSetCursorPosCallback(window, mouse_callback);
+
 
     // GLAD manages function points for OpenGL, so init before call any functs
     // Load address of OpenGL funct points which OS specific
@@ -284,13 +366,20 @@ int main()
     //glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans)); // last param convert data with glm's function
 
 
-    float vis = 0.2f;
+    
+
     glEnable(GL_DEPTH_TEST);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); wireframe mode
     // render loop!- iteration of render loop called a FRAME
     // so app keeps drawing images and handle input until told to stop
     while (!glfwWindowShouldClose(window)) // checks if glfw has been told to close
     {
+        // Calculate deltatime each frame
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
         // INPUT:
         processInput(window);
 
@@ -310,11 +399,9 @@ int main()
         ourShader.setFloat("visVal", mixValue);
 
         // view matrix, move backwards in scene by moving entire scene forward (-z axis bc right-handed system)
-        const float radius = 5.0f;
-        float camX = sin(glfwGetTime()) * radius;
-        float camZ = cos(glfwGetTime()) * radius;
         glm::mat4 view;
-        view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+        // direction cameraPos + cameraFront ensures however we move, caamera keeps looking at target direction
+        view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
 
         // projection matrix
