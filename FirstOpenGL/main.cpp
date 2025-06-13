@@ -13,8 +13,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 
-float mixValue = 0.2f; // value to mix between two textures, used in shader
-
 // unique vertices of rectangle
 //  storing three vec3 vertex attributes, position, color, texture coords
 float uniqueVertices[] = {
@@ -240,6 +238,8 @@ int main()
     // this encapsulates alot of code
     Shader ourShader("C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/shader.vs",
         "C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/shader.fs");
+
+    //Shader lightningShader()
     
 
     // create a vertex array object to store configuration
@@ -329,8 +329,8 @@ int main()
         // object and thus the shaders
         ourShader.use();
 
-        // adjust transition between the 2 textures
-        ourShader.setFloat("visVal", mixValue);
+        // set time for reveal effect
+        ourShader.setFloat("ftime", (float)glfwGetTime());
 
         // camera/view matrix
         glm::mat4 view = camera.GetViewMatrix();
