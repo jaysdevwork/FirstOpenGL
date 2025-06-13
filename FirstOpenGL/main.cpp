@@ -4,33 +4,19 @@
 #include <GLFW/glfw3.h> // gives bare necessities for rendering to screen
 #include <iostream>
 #include "Shader.h"
+#include "Camera.h"
 #include "stb_image.h"
+
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 
-
 float mixValue = 0.2f; // value to mix between two textures, used in shader
 
-// three vertices for triange
-float vertices[] = {
-    // positions         // colors
-     0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // bottom right
-    -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // bottom left
-     0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // top 
-};
-
 // unique vertices of rectangle
-//  storing two vec3 vertex attributes, position, color, texture coords
-//float uniqueVertices[] = {
-//    // positions         // colors          // texture coords
-//     0.5f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f,  // top right - red
-//     0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,  1.0f, 0.0f, // bottom right - green
-//    -0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  0.0f, 0.0f,// bottom left - blue
-//    -0.5f,  0.5f, 0.0f,  1.0f, 1.0f, 0.0f,  0.0f, 1.0f// top left - yellow
-//};
+//  storing three vec3 vertex attributes, position, color, texture coords
 float uniqueVertices[] = {
     // Back face (red tones)
     -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
@@ -94,23 +80,9 @@ glm::vec3 cubePositions[] = {
     glm::vec3(-1.3f,  1.0f, -1.5f)
 };
 
-// index order to draw them
-unsigned int indices[] =
-{
-    0, 1, 3,
-    1, 2, 3
-};
 
-float texCoords[] =
-{
-    0.0f, 0.0f, // lower left corner
-    1.0f, 0.0f, // lower right corner
-    0.5f, 1.0f // top center corner
-};
 
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0);
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 float deltaTime = 0.0f; // Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
@@ -136,7 +108,7 @@ float lastX = 400, lastY = 300;
 bool firstMouse = true;
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) // tell glfw to listen to mouse-movement events.
 {   
-    // bascially makes the offset 0 so no movement upon mouse first entering
+    // basically makes offset 0 so no movement upon mouse entering
     if (firstMouse)
     {
         lastX = xpos;
@@ -144,35 +116,19 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) // tell glfw t
         firstMouse = false;
     }
 
-    float xOffset = xpos - lastX;
-    float yOffset = lastY - ypos; // reversed since y-coords range from bottom to top
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
     lastX = xpos;
     lastY = ypos;
 
-    const float sensitivity = 0.1f;
-    xOffset *= sensitivity;
-    yOffset *= sensitivity;
+    camera.ProcessMouseMovement(xoffset, yoffset);
+}
 
-    yaw += xOffset;
-    pitch += yOffset;
-
-    if (pitch > 89.0f)
-    {
-        pitch = 89.0f;
-    }
-
-    if (pitch < -89.0f)
-    {
-        pitch = -89.0f;
-    }
-
-    // include all rots calculated from mouse's movement
-    // formula is one using right triangles
-    glm::vec3 direction;
-    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    direction.y = sin(glm::radians(pitch));
-    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    cameraFront = glm::normalize(direction);
+// y offset how much we scrolled vertically
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
 void processInput(GLFWwindow* window)
@@ -182,40 +138,16 @@ void processInput(GLFWwindow* window)
         glfwSetWindowShouldClose(window, true); // returns whether key currently being pressed
     }
 
-
-	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-	{
-		mixValue += 0.001f; // increase mix value
-		if (mixValue >= 1.0f) mixValue = 1.0f; // clamp to max value
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-	{
-		mixValue -= 0.001f; // decrease mix value
-		if (mixValue <= 0.0f) mixValue = 0.0f; // clamp to min value
-	}
-
-    // For moving camera pos
-    const float cameraSpeed = 2.5f * deltaTime;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-    {
-        cameraPos += cameraSpeed * cameraFront;
-    }
-
+        camera.ProcessKeyboard(FORWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-    {
-        cameraPos -= cameraSpeed * cameraFront;
-    }
-
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-    {
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed; // cross product normalized gives us pos x axis unit vec
-    }
-
+        camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-    {
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-    }
+        camera.ProcessKeyboard(RIGHT, deltaTime);
+
+    //cameraPos.y = 0.0f; // make camera stick to xz plane
 
 }
 
@@ -240,12 +172,14 @@ int main()
     // Make context of window the main context on current thread
     glfwMakeContextCurrent(window);
 
-    // register function for window resize
+    // register callback functions to automatically be called upon their respective events
     // IMPORTANT: register callback functions after created window and before render loop is initiated
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     // register callback function- making it so each time mouse moves mouse_callback funct is called
     glfwSetCursorPosCallback(window, mouse_callback);
+
+    glfwSetScrollCallback(window, scroll_callback);
 
 
     // GLAD manages function points for OpenGL, so init before call any functs
@@ -325,10 +259,10 @@ int main()
     glBufferData(GL_ARRAY_BUFFER, sizeof(uniqueVertices), uniqueVertices, GL_STATIC_DRAW);
 
     // specify order to draw vertices in with a element buffer object
-    unsigned int EBO;
-    glGenBuffers(1, &EBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    //unsigned int EBO;
+    //glGenBuffers(1, &EBO);
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 
     // specify how opengl should interpret vertex data
@@ -398,16 +332,13 @@ int main()
         // adjust transition between the 2 textures
         ourShader.setFloat("visVal", mixValue);
 
-        // view matrix, move backwards in scene by moving entire scene forward (-z axis bc right-handed system)
-        glm::mat4 view;
-        // direction cameraPos + cameraFront ensures however we move, caamera keeps looking at target direction
-        view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-
-
+        // camera/view matrix
+        glm::mat4 view = camera.GetViewMatrix();
+        ourShader.setMat("view", view);
+        
         // projection matrix
         glm::mat4 projection;
-        projection = glm::perspective(glm::radians(45.0f), 16.0f/9.0f, 0.1f, 100.0f);
-        ourShader.setMat("view", view);
+        projection = glm::perspective(glm::radians(camera.Zoom), 800.0f/600.0f, 0.1f, 100.0f);
         ourShader.setMat("projection", projection);
 
         // bind texture, using texture unit (location of a texture)
@@ -434,9 +365,6 @@ int main()
             
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
-
-
-
 
         // CHECK AND CALL EVENTS AND SWAP BUFFERS:
         // swap color buffer used torender and show as ouput to screen
