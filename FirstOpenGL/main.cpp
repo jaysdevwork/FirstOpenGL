@@ -415,9 +415,12 @@ int main()
 
         // draw
         glBindVertexArray(VAO2);
-        glLineWidth(8.0f);
+        glLineWidth(4.0f);
         const int boltsPerCube = 4; // Number of bolts around each cube
         const float boltDistance = 1.0f; // How far from cube center
+
+        float boltRotationSpeed = 100.0f; // Degrees per second - adjustable
+        float currentTime = glfwGetTime(); // Or use your preferred time function
 
         // Draw lightning bolts around each cube
         for (unsigned int cubeIndex = 0; cubeIndex < 10; cubeIndex++) {
@@ -425,8 +428,12 @@ int main()
 
             // Draw bolts in a circle around this cube
             for (int boltIndex = 0; boltIndex < boltsPerCube; boltIndex++) {
-                // Calculate angle for this bolt
-                float angle = (float)boltIndex / (float)boltsPerCube * 360.0f; // Degrees
+                // Calculate base angle for this bolt
+                float baseAngle = (float)boltIndex / (float)boltsPerCube * 360.0f; // Degrees
+
+                // Add time-based rotation for movement
+                float timeRotation = currentTime * boltRotationSpeed; // Rotation based on time
+                float angle = baseAngle + timeRotation;
 
                 // Create model matrix for this bolt
                 glm::mat4 model = glm::mat4(1.0f);
@@ -434,7 +441,7 @@ int main()
                 // 1. Move to cube position
                 model = glm::translate(model, cubePos);
 
-                // 2. Rotate around Y-axis to position bolt around the cube
+                // 2. Rotate around Y-axis to position bolt around the cube (now with movement)
                 model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
 
                 // 3. Move away from cube center (in rotated X direction)

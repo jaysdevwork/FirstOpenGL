@@ -21,6 +21,11 @@ void main()
     float intensity = abs(sin(timeScale + vertexPhase * 1.7));
     
     pos.y += direction * intensity * 0.25;
+
+    // testing 
+    pos.x += direction * intensity * 0.12;
+    pos.z += direction * intensity * 0.8;
+
     
     gl_Position = projection * view * model * vec4(pos, 1.0);
     
