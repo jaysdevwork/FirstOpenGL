@@ -42,5 +42,7 @@
   <ItemGroup>
     <None Include="shader.vs" />
     <None Include="shader.fs" />
+    <None Include="lightning.fs" />
+    <None Include="lightning.vs" />
   </ItemGroup>
 </Project>

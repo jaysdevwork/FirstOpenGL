@@ -143,6 +143,8 @@
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="lightning.fs" />
+    <None Include="lightning.vs" />
     <None Include="shader.fs" />
     <None Include="shader.vs" />
   </ItemGroup>

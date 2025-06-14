@@ -78,6 +78,17 @@ glm::vec3 cubePositions[] = {
     glm::vec3(-1.3f,  1.0f, -1.5f)
 };
 
+// 6 vertices in a straight line from left to right
+float lightningVertices[] = {
+    // x,    y,    z
+    -1.0f, 0.0f, 0.0f,  // start
+    -0.6f, 0.0f, 0.0f,  // point 2
+    -0.2f, 0.0f, 0.0f,  // point 3
+     0.2f, 0.0f, 0.0f,  // point 4
+     0.6f, 0.0f, 0.0f,  // point 5
+     1.0f, 0.0f, 0.0f   // end
+};
+
 
 
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -239,7 +250,8 @@ int main()
     Shader ourShader("C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/shader.vs",
         "C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/shader.fs");
 
-    //Shader lightningShader()
+    Shader lightningShader("C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/lightning.vs",
+        "C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/lightning.fs");
     
 
     // create a vertex array object to store configuration
@@ -264,7 +276,6 @@ int main()
     //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-
     // specify how opengl should interpret vertex data
     // tells opengl how to link vertex data to the vertex shader's shader attributes
     // vbo bound to gl_array_buffer, so vertex attribute 0 now assoc with its vertex data
@@ -278,6 +289,21 @@ int main()
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
+    // lightning bolts vao and vbo setup
+    unsigned int VAO2;
+    glGenVertexArrays(1, &VAO2);
+    glBindVertexArray(VAO2);
+
+    unsigned int VBO2;
+    glGenBuffers(1, &VBO2);
+    // buffer type of a vertex buffer 
+    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+    // copy vertex data into current bound buffer memory
+    glBufferData(GL_ARRAY_BUFFER, sizeof(lightningVertices), lightningVertices, GL_STATIC_DRAW);
+    // tell opengl how to link vertex data to vertex shader's shader attributes.
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); // uses previously bound vbo to take its data from!
+    glEnableVertexAttribArray(0);
 
 
     // tell opengl which texture unit (location of a texture) each shader sample uniform belongs to. need only do once
@@ -325,6 +351,7 @@ int main()
         // bitwise flag used to combine into one value
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // specifcied color buffer. STATE-USING (uses curr state to retrieve clearing color from)
 
+        // ---------- Draw cubes ----------
         // activate program. every rendering call after will now use this program
         // object and thus the shaders
         ourShader.use();
@@ -366,7 +393,64 @@ int main()
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
-        // CHECK AND CALL EVENTS AND SWAP BUFFERS:
+
+        // ---------- Draw lightning ----------
+        lightningShader.use();
+
+        lightningShader.setFloat("time", (float)glfwGetTime());
+
+        // model matrix
+        glm::mat4 model2 = glm::mat4(1.0f); // identity
+        model2 = glm::translate(model2, glm::vec3(0.0f, 0.0f, 0.0f));
+        lightningShader.setMat("model", model2);
+
+        // camera/view matrix
+        glm::mat4 view2 = camera.GetViewMatrix();
+        lightningShader.setMat("view", view2);
+
+        // projection matrix
+        glm::mat4 projection2;
+        projection2 = glm::perspective(glm::radians(camera.Zoom), 800.0f / 600.0f, 0.1f, 100.0f);
+        lightningShader.setMat("projection", projection2);
+
+        // draw
+        glBindVertexArray(VAO2);
+        glLineWidth(8.0f);
+        const int boltsPerCube = 4; // Number of bolts around each cube
+        const float boltDistance = 1.0f; // How far from cube center
+
+        // Draw lightning bolts around each cube
+        for (unsigned int cubeIndex = 0; cubeIndex < 10; cubeIndex++) {
+            glm::vec3 cubePos = cubePositions[cubeIndex];
+
+            // Draw bolts in a circle around this cube
+            for (int boltIndex = 0; boltIndex < boltsPerCube; boltIndex++) {
+                // Calculate angle for this bolt
+                float angle = (float)boltIndex / (float)boltsPerCube * 360.0f; // Degrees
+
+                // Create model matrix for this bolt
+                glm::mat4 model = glm::mat4(1.0f);
+
+                // 1. Move to cube position
+                model = glm::translate(model, cubePos);
+
+                // 2. Rotate around Y-axis to position bolt around the cube
+                model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+
+                // 3. Move away from cube center (in rotated X direction)
+                model = glm::translate(model, glm::vec3(boltDistance, 0.0f, 0.0f));
+
+                // 4. Rotate bolt to be vertical (90 degrees around Z-axis)
+                model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+                // Set the model matrix and draw
+                lightningShader.setMat("model", model);
+                glDrawArrays(GL_LINE_STRIP, 0, 6);
+            }
+        }
+
+
+        //  ---------- CHECK AND CALL EVENTS AND SWAP BUFFERS  ----------
         // swap color buffer used torender and show as ouput to screen
         // double buffering to prevent artifacts. front buffer is final output, rendering ccmds draw to back buffer
         // soon as rendering cmds are finished, swap back buffer to front so img can be displayed without still being rendered to
