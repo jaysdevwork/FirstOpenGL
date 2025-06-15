@@ -7,7 +7,6 @@
 #include "Camera.h"
 #include "stb_image.h"
 
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -96,6 +95,9 @@ Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 float deltaTime = 0.0f; // Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 
+float effectStartTime = 0.0f; // when the effect was started/restarted
+bool rKeyPressed = false; // single press detection
+
 // callback function called each time window resize to adjust viewport
 // glfw calls and fills proper arguments on its own once binded
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -116,7 +118,7 @@ float lastX = 400, lastY = 300;
 // prevent large movement jump upon mouse first entering window
 bool firstMouse = true;
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) // tell glfw to listen to mouse-movement events.
-{   
+{
     // basically makes offset 0 so no movement upon mouse entering
     if (firstMouse)
     {
@@ -155,6 +157,20 @@ void processInput(GLFWwindow* window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
+
+    // Handle R key for restarting effect
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+    {
+        if (!rKeyPressed) // Only restart on key press, not while held
+        {
+            effectStartTime = glfwGetTime(); // Reset the start time
+            rKeyPressed = true;
+        }
+    }
+    else
+    {
+        rKeyPressed = false; // Key released, allow next press
+    }
 
     //cameraPos.y = 0.0f; // make camera stick to xz plane
 
@@ -199,7 +215,7 @@ int main()
         return -1;
     }
 
-   
+
     // setup textures
     unsigned int texture[2];
     glGenTextures(2, texture); // generate two texture ids
@@ -218,8 +234,8 @@ int main()
         // generate texture
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
-    } 
-    else 
+    }
+    else
     {
         std::cout << "Failed to load texture" << std::endl;
     }
@@ -252,7 +268,7 @@ int main()
 
     Shader lightningShader("C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/lightning.vs",
         "C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/lightning.fs");
-    
+
 
     // create a vertex array object to store configuration
     // i.e. vertex attribute config and which vbo to use
@@ -283,7 +299,7 @@ int main()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // 1st param is LOCATION in vertex shader to pass to
     glEnableVertexAttribArray(0);
     // COLOR ATTRIBUTE
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float))); // last param is offset to place after pos data in VBO memory
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float))); // last param is offset to place after pos data in VBO memory
     glEnableVertexAttribArray(1);
     // TEXTURE COORDINATE ATTRIBUTE 
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
@@ -311,23 +327,6 @@ int main()
     ourShader.setInt("texture1", 0); // 0 is corresponding texture unit of texture[0]. texture1 is sampler var name
     ourShader.setInt("texture2", 1);
 
-
-    // old glm learning code
-    //glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
-    //glm::mat4 trans = glm::mat4(1.0f); // init to identity matrix
-    //trans = glm::translate(trans, glm::vec3(1.0f, 1.0f, 0.0f)); // vec is what we want to translate by
-    //vec = trans * vec;
-    //std::cout << vec.x << vec.y << vec.z << std::endl;
-    //glm::mat4 trans = glm::mat4(1.0f);
-    // transformation order should be read in reverse
-    //trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
-    //trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.05));
-    //unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
-    //glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans)); // last param convert data with glm's function
-
-
-    
-
     glEnable(GL_DEPTH_TEST);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); wireframe mode
@@ -346,7 +345,7 @@ int main()
         // RENDERING COMMANDS HERE:
         // clear screens color buffer at START of frame
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f); // whenever call glClear, filled with color configured here. STATE-SETTING
-        
+
         //clear depth and color buffers beach each rendering iteration, otherwise info from previous frame stays in buffer
         // bitwise flag used to combine into one value
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // specifcied color buffer. STATE-USING (uses curr state to retrieve clearing color from)
@@ -356,22 +355,23 @@ int main()
         // object and thus the shaders
         ourShader.use();
 
-        // for reveal effect 
+        // for reveal effect - use time since effect started instead of absolute time
         float pt1RevealSpeed = 0.6f;
-        float revealProgress = (float)glfwGetTime() * pt1RevealSpeed;
+        float effectTime = currentFrame - effectStartTime; // Time since effect started
+        float revealProgress = effectTime * pt1RevealSpeed;
         ourShader.setFloat("revealProgress", revealProgress);
         ourShader.setFloat("revealPt1Speed", pt1RevealSpeed);
-        ourShader.setFloat("ftime", glfwGetTime());
+        ourShader.setFloat("ftime", effectTime); 
 
 
 
         // camera/view matrix
         glm::mat4 view = camera.GetViewMatrix();
         ourShader.setMat("view", view);
-        
+
         // projection matrix
         glm::mat4 projection;
-        projection = glm::perspective(glm::radians(camera.Zoom), 800.0f/600.0f, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(camera.Zoom), 800.0f / 600.0f, 0.1f, 100.0f);
         ourShader.setMat("projection", projection);
 
         // bind texture, using texture unit (location of a texture)
@@ -391,21 +391,20 @@ int main()
 
             if (i % 3 == 0)
             {
-                angle = (float)glfwGetTime() * 10.0f;
+                angle = effectTime * 10.0f; // Use effect time for rotation too
             }
             model = glm::rotate(model, angle, glm::vec3(1.0f, 0.3f, 0.05f)); // rot at angle degrees a second
             ourShader.setMat("model", model);
-            
+
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
 
-                                                // TODO: Might want to make it so lightning scales as object is revealed. Gotta bring reveal progress to CPU side here
         // ---------- Draw lightning ----------
-        
+
         lightningShader.use();
 
-        lightningShader.setFloat("time", (float)glfwGetTime());
+        lightningShader.setFloat("time", effectTime); // Use effect time for lightning
 
         // model matrix
         glm::mat4 model2 = glm::mat4(1.0f); // identity
@@ -427,7 +426,6 @@ int main()
         const int boltsPerCube = 2; // Number of bolts around each cube
         const float boltDistance = 0.7f; // How far from cube center
         float baseBoltRotationSpeed = 90.0f; // Base degrees per second
-        float currentTime = glfwGetTime();
 
         // Draw lightning bolts around each cube
         if (revealProgress <= 1.0f)
@@ -441,8 +439,8 @@ int main()
                     int boltSeed = cubeIndex * boltsPerCube + boltIndex;
                     // Generate consistent pseudo-random values for this bolt
                     float rotationSpeedOffset = (sin(boltSeed * 1.234f) * 0.3f + 1.1f); // Range: 0.8 to 1.4
-                    float yOffset = sin(boltSeed * 2.567f) * 0.2f; // Range: -0.2 to 0.2
-                    float thicknessMultiplier = (sin(boltSeed * 3.891f) * 0.8f + 1.0f); // Range: 0.5 to 1.5
+                    float yOffset = sin(boltSeed * 2.567f) * 0.1f; // Range: -0.1 to 0.1
+                    float thicknessMultiplier = (sin(boltSeed * 3.891f) * 0.5f + 1.5f); // Range: 1.0 to 2.0
 
                     // Apply rotation speed variation
                     float boltRotationSpeed = baseBoltRotationSpeed * rotationSpeedOffset;
@@ -454,8 +452,8 @@ int main()
                     // Calculate base angle for this bolt
                     float baseAngle = (float)boltIndex / (float)boltsPerCube * 360.0f; // Degrees
 
-                    // Add time-based rotation for movement with individual speed
-                    float timeRotation = currentTime * boltRotationSpeed; // Rotation based on time
+                    // Add time-based rotation for movement with individual speed - using effect time
+                    float timeRotation = effectTime * boltRotationSpeed; // Rotation based on effect time
                     float angle = baseAngle + timeRotation;
 
                     // Create model matrix for this bolt
@@ -472,7 +470,7 @@ int main()
                     model = glm::translate(model, glm::vec3(boltDistance, 0.0f, 0.0f));
 
                     // 4. Increase bolt size as fragments are revealed
-                    model = glm::scale(model, glm::vec3(revealProgress / 1.3f, revealProgress / 1.3f, revealProgress / 1.3f));
+                    model = glm::scale(model, glm::vec3(revealProgress / 1.2f, revealProgress / 1.2f, revealProgress / 1.2f));
 
                     // 5. Rotate bolt to be vertical (90 degrees around Z-axis)
                     model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -493,7 +491,7 @@ int main()
 
                     // Slow rotation speed for small bolts
                     float smallBoltSpeed = 30.0f * (sin(smallBoltSeed * 3.456f) * 0.5f + 1.0f); // 15 to 45 degrees per second
-                    float smallTimeRotation = currentTime * smallBoltSpeed;
+                    float smallTimeRotation = effectTime * smallBoltSpeed; // Use effect time
                     float finalAngle = baseAngle + smallTimeRotation;
 
                     // Small bolt properties
