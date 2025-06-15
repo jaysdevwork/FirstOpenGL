@@ -1,53 +1,59 @@
 #version 330 core
 out vec4 FragColor;
 
-in vec2 TexCoord;
-in vec3 worldPos;          // Add this - you need world position
-in float surfaceMinY;
-in float surfaceMaxY;
 
+in vec2 TexCoord;
+
+// fragment shader needs access to texture object
 uniform sampler2D texture1;
 uniform sampler2D texture2;
 
 uniform float ftime;
+// growing veil from center that reveals each frag. 
+// as white until all frags fully revealed
 uniform float revealProgress;
 uniform float revealPt1Speed;
 
+
 void main()
 {
-    // Calculate the center Y of this surface in world space
-    float surfaceYCenter = (surfaceMinY + surfaceMaxY) * 0.5;
-    
-    // Calculate distance from surface center along world Y axis
-    float distFromSurfaceCenter = abs(worldPos.y - surfaceYCenter);
-    
-    // Maximum distance from center to surface edge in world Y
-    float maxYDist = abs(surfaceMaxY - surfaceMinY) * 0.5;
-    
-    // Normalize the distance (0.0 at surface center, 1.0 at surface edges)
-    float normalizedDist = distFromSurfaceCenter / maxYDist;
-    
-    float revealPt1Time = 1.0 / revealPt1Speed;
+    // Calculate distance from center Y for each fragment
+    float distFromCenter = abs(TexCoord.y - 0.5);
+    // Maximum distance from center to surface edge
+    float maxDist = 0.5;
+    float normalizedDist = distFromCenter / maxDist;
+    float revealPt1Time = 1.0 / revealPt1Speed; // gives time in seconds for full reveal of all fragments
    
-    // Discard fragments that growing threshold/veil has yet reached
+    // discard fragments that growing threshold/veil has yet reached
     if (normalizedDist > revealProgress) {
         discard;
     }
 
-    // Full texture mix to be revealed after full reveal commences
-    vec4 textureColor = mix(texture(texture1, TexCoord), texture(texture2, vec2(1.0 - TexCoord.x, TexCoord.y)), 0.2);
+    // full texture mix to be revealed after full reveal commences
+    vec4 textureColor = mix(texture(texture1, TexCoord), texture(texture2, vec2(1.0 - TexCoord.x, TexCoord.y)), 0.2); //* vec4(ourColor, 1.0); // invert x axis
     vec4 brightWhite = vec4(1.0, 1.0, 1.0, 1.0);
-    
-    bool fullyRevealed = (revealProgress >= 1.0); // Changed to 1.0 since we're using normalized distance
-    
+    bool fullyRevealed = (revealProgress >= maxDist); // true once reveal threshold has reached end
     if(fullyRevealed)
     {
-        float transitionValue = (ftime - revealPt1Time) * 0.5;
+        // restart time for next transition
+        float transitionValue = (ftime - revealPt1Time) * 0.5; // Adjust 0.2 to control speed
         transitionValue = clamp(transitionValue, 0.0, 1.0);
         FragColor = mix(brightWhite, textureColor, transitionValue);
     } 
+    // if every fragment not revealed yet, appear as white
     else
     {
         FragColor = brightWhite;
     }
+
 }
+
+
+
+
+
+    // sample color of texture using our texture object we setup and coords
+    // output is filtered color of texture at the interpolated texture coordinate
+    //FragColor = texture(ourTexture, TexCoord) * vec4(ourColor, 1.0);
+    // final output color is combo of 2 txture look ups. 
+    // 3rd param as 0.2 returns 80% of first input color
