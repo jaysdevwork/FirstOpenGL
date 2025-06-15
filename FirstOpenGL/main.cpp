@@ -356,8 +356,14 @@ int main()
         // object and thus the shaders
         ourShader.use();
 
-        // set time for reveal effect
-        ourShader.setFloat("ftime", (float)glfwGetTime());
+        // for reveal effect 
+        float pt1RevealSpeed = 0.6f;
+        float revealProgress = (float)glfwGetTime() * pt1RevealSpeed;
+        ourShader.setFloat("revealProgress", revealProgress);
+        ourShader.setFloat("revealPt1Speed", pt1RevealSpeed);
+        ourShader.setFloat("ftime", glfwGetTime());
+
+
 
         // camera/view matrix
         glm::mat4 view = camera.GetViewMatrix();
@@ -394,7 +400,9 @@ int main()
         }
 
 
+                                                // TODO: Might want to make it so lightning scales as object is revealed. Gotta bring reveal progress to CPU side here
         // ---------- Draw lightning ----------
+        
         lightningShader.use();
 
         lightningShader.setFloat("time", (float)glfwGetTime());
@@ -415,44 +423,92 @@ int main()
 
         // draw
         glBindVertexArray(VAO2);
-        glLineWidth(4.0f);
-        const int boltsPerCube = 4; // Number of bolts around each cube
-        const float boltDistance = 1.0f; // How far from cube center
 
-        float boltRotationSpeed = 100.0f; // Degrees per second - adjustable
-        float currentTime = glfwGetTime(); // Or use your preferred time function
+        const int boltsPerCube = 2; // Number of bolts around each cube
+        const float boltDistance = 0.7f; // How far from cube center
+        float baseBoltRotationSpeed = 90.0f; // Base degrees per second
+        float currentTime = glfwGetTime();
 
         // Draw lightning bolts around each cube
-        for (unsigned int cubeIndex = 0; cubeIndex < 10; cubeIndex++) {
-            glm::vec3 cubePos = cubePositions[cubeIndex];
+        if (revealProgress <= 1.0f)
+        {
+            for (unsigned int cubeIndex = 0; cubeIndex < 10; cubeIndex++) {
+                glm::vec3 cubePos = cubePositions[cubeIndex];
 
-            // Draw bolts in a circle around this cube
-            for (int boltIndex = 0; boltIndex < boltsPerCube; boltIndex++) {
-                // Calculate base angle for this bolt
-                float baseAngle = (float)boltIndex / (float)boltsPerCube * 360.0f; // Degrees
+                // Draw main bolts in a circle around this cube
+                for (int boltIndex = 0; boltIndex < boltsPerCube; boltIndex++) {
+                    // Create unique seed for this specific bolt
+                    int boltSeed = cubeIndex * boltsPerCube + boltIndex;
+                    // Generate consistent pseudo-random values for this bolt
+                    float rotationSpeedOffset = (sin(boltSeed * 1.234f) * 0.3f + 1.1f); // Range: 0.8 to 1.4
+                    float yOffset = sin(boltSeed * 2.567f) * 0.2f; // Range: -0.2 to 0.2
+                    float thicknessMultiplier = (sin(boltSeed * 3.891f) * 0.8f + 1.0f); // Range: 0.5 to 1.5
 
-                // Add time-based rotation for movement
-                float timeRotation = currentTime * boltRotationSpeed; // Rotation based on time
-                float angle = baseAngle + timeRotation;
+                    // Apply rotation speed variation
+                    float boltRotationSpeed = baseBoltRotationSpeed * rotationSpeedOffset;
 
-                // Create model matrix for this bolt
-                glm::mat4 model = glm::mat4(1.0f);
+                    // Apply thickness variation
+                    float boltThickness = 3.0f * thicknessMultiplier;
+                    glLineWidth(boltThickness);
 
-                // 1. Move to cube position
-                model = glm::translate(model, cubePos);
+                    // Calculate base angle for this bolt
+                    float baseAngle = (float)boltIndex / (float)boltsPerCube * 360.0f; // Degrees
 
-                // 2. Rotate around Y-axis to position bolt around the cube (now with movement)
-                model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+                    // Add time-based rotation for movement with individual speed
+                    float timeRotation = currentTime * boltRotationSpeed; // Rotation based on time
+                    float angle = baseAngle + timeRotation;
 
-                // 3. Move away from cube center (in rotated X direction)
-                model = glm::translate(model, glm::vec3(boltDistance, 0.0f, 0.0f));
+                    // Create model matrix for this bolt
+                    glm::mat4 model = glm::mat4(1.0f);
 
-                // 4. Rotate bolt to be vertical (90 degrees around Z-axis)
-                model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+                    // 1. Move to cube position with Y offset
+                    glm::vec3 offsetCubePos = cubePos + glm::vec3(0.0f, yOffset, 0.0f);
+                    model = glm::translate(model, offsetCubePos);
 
-                // Set the model matrix and draw
-                lightningShader.setMat("model", model);
-                glDrawArrays(GL_LINE_STRIP, 0, 6);
+                    // 2. Rotate around Y-axis to position bolt around the cube (now with movement)
+                    model = glm::rotate(model, glm::radians(angle), glm::vec3(0.0f, 1.0f, 0.0f));
+
+                    // 3. Move away from cube center (in rotated X direction)
+                    model = glm::translate(model, glm::vec3(boltDistance, 0.0f, 0.0f));
+
+                    // 4. Increase bolt size as fragments are revealed
+                    model = glm::scale(model, glm::vec3(revealProgress / 1.3f, revealProgress / 1.3f, revealProgress / 1.3f));
+
+                    // 5. Rotate bolt to be vertical (90 degrees around Z-axis)
+                    model = glm::rotate(model, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+                    // Set the model matrix and draw main bolt
+                    lightningShader.setMat("model", model);
+                    glDrawArrays(GL_LINE_STRIP, 0, 6);
+                }
+
+                // Draw 3 small random bolts around each cube
+                for (int smallBoltIndex = 0; smallBoltIndex < 4; smallBoltIndex++) {
+                    int smallBoltSeed = cubeIndex * 100 + smallBoltIndex;
+
+                    // Random base position around cube
+                    float baseAngle = sin(smallBoltSeed * 7.123f) * 360.0f;
+                    float randomDistance = sin(smallBoltSeed * 8.456f) * 0.3f + 0.5f; // 0.2 to 0.8
+                    float randomY = sin(smallBoltSeed * 9.789f) * 0.4f; // -0.4 to 0.4
+
+                    // Slow rotation speed for small bolts
+                    float smallBoltSpeed = 30.0f * (sin(smallBoltSeed * 3.456f) * 0.5f + 1.0f); // 15 to 45 degrees per second
+                    float smallTimeRotation = currentTime * smallBoltSpeed;
+                    float finalAngle = baseAngle + smallTimeRotation;
+
+                    // Small bolt properties
+                    glLineWidth(3.3f); // Thin line
+
+                    glm::mat4 smallModel = glm::mat4(1.0f);
+                    smallModel = glm::translate(smallModel, cubePos + glm::vec3(0.0f, randomY, 0.0f));
+                    smallModel = glm::rotate(smallModel, glm::radians(finalAngle), glm::vec3(0.0f, 1.0f, 0.0f));
+                    smallModel = glm::translate(smallModel, glm::vec3(randomDistance, 0.0f, 0.0f));
+                    smallModel = glm::scale(smallModel, glm::vec3(0.2f * revealProgress, 0.2f * revealProgress, 0.2f * revealProgress));
+                    smallModel = glm::rotate(smallModel, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+                    lightningShader.setMat("model", smallModel);
+                    glDrawArrays(GL_LINE_STRIP, 0, 6);
+                }
             }
         }
 
