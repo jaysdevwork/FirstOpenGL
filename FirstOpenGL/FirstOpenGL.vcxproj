@@ -71,8 +71,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Users\jay\Documents\OpenGL\OpenGLIncludesNLibs\Includes;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\jay\Documents\OpenGL\OpenGLIncludesNLibs\Libs;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\OpenGL\OpenGLIncludesNLibs\Includes;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\OpenGL\OpenGLIncludesNLibs\Libs;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -132,7 +132,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\OpenGLIncludesNLibs\glad_c\src\glad.c" />
+    <ClCompile Include="..\..\OpenGL\OpenGLIncludesNLibs\glad_c\src\glad.c" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="stb_image.cpp" />

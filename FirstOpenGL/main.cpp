@@ -238,8 +238,8 @@ int main()
     // ALL OF THIS MUST COME AFTER INIT GLFW AND GLAD!!
     // create shader object: reads from disk, compiles, links, and checks for errors for vertex and fragment shaders
     // this encapsulates alot of code
-    Shader ourShader("C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/shader.vs",
-        "C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/shader.fs");
+    Shader ourShader("D:/FirstOpenGLTutorial/FirstOpenGL/shader.vs",
+        "D:/FirstOpenGLTutorial/FirstOpenGL/shader.fs");
     
 
     // create a vertex array object to store configuration
