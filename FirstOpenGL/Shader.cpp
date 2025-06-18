@@ -106,3 +106,8 @@ void Shader::setMat(const std::string& name, glm::mat4 matrix)
 	unsigned int transformLoc = glGetUniformLocation(ID, name.c_str());
 	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(matrix)); // last param convert data with glm's function
 }
+
+void Shader::setVec3(const std::string& name, float x, float y, float z)
+{
+	glUniform3f(glGetUniformLocation(ID, name.c_str()), x, y, z);
+}

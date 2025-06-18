@@ -13,7 +13,11 @@
 #include <glm/gtc/type_ptr.hpp>
 
 
-float mixValue = 0.2f; // value to mix between two textures, used in shader
+
+
+
+
+glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
 // unique vertices of rectangle
 //  storing three vec3 vertex attributes, position, color, texture coords
@@ -65,6 +69,56 @@ float uniqueVertices[] = {
       0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.8f,  1.0f, 0.0f,
      -0.5f,  0.5f,  0.5f,  0.1f, 0.9f, 0.9f,  0.0f, 0.0f,
      -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 1.0f,  0.0f, 1.0f
+};
+
+float uniqueVerticesPos[] = {
+    // Back face
+    -0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f,  0.5f, -0.5f,
+     0.5f,  0.5f, -0.5f,
+    -0.5f,  0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f,
+
+    // Front face
+    -0.5f, -0.5f,  0.5f,
+     0.5f, -0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f,
+    -0.5f, -0.5f,  0.5f,
+
+    // Left face
+    -0.5f,  0.5f,  0.5f,
+    -0.5f,  0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f,
+    -0.5f, -0.5f,  0.5f,
+    -0.5f,  0.5f,  0.5f,
+
+    // Right face
+     0.5f,  0.5f,  0.5f,
+     0.5f,  0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f,
+     0.5f, -0.5f,  0.5f,
+     0.5f,  0.5f,  0.5f,
+
+     // Bottom face
+     -0.5f, -0.5f, -0.5f,
+      0.5f, -0.5f, -0.5f,
+      0.5f, -0.5f,  0.5f,
+      0.5f, -0.5f,  0.5f,
+     -0.5f, -0.5f,  0.5f,
+     -0.5f, -0.5f, -0.5f,
+
+     // Top face
+     -0.5f,  0.5f, -0.5f,
+      0.5f,  0.5f, -0.5f,
+      0.5f,  0.5f,  0.5f,
+      0.5f,  0.5f,  0.5f,
+     -0.5f,  0.5f,  0.5f,
+     -0.5f,  0.5f, -0.5f
 };
 
 glm::vec3 cubePositions[] = {
@@ -279,6 +333,50 @@ int main()
     glEnableVertexAttribArray(2);
 
 
+    Shader lightingShader("D:/FirstOpenGLTutorial/FirstOpenGL/lightShader.vs",
+        "D:/FirstOpenGLTutorial/FirstOpenGL/lightShader.fs");
+    lightingShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+    lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+
+    Shader lightSourceShader("D:/FirstOpenGLTutorial/FirstOpenGL/lightSourceShader.vs",
+        "D:/FirstOpenGLTutorial/FirstOpenGL/lightSourceShader.fs");
+
+    // must use shader program first to set uniforms
+    lightingShader.use();
+    lightingShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+    lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+
+    // cube to cast light on 
+    unsigned int lightObjectVAO;
+    glGenVertexArrays(1, &lightObjectVAO);
+    glBindVertexArray(lightObjectVAO); // to use vao, this point on bind corresponding VBOs and attribute points. then unbind for later use
+
+    unsigned int VBO2;
+    glGenBuffers(1, &VBO2);
+    // from this point on any buffer calls make on GL_ARRAY_BUFFER target will be used to config the currently
+    // bound buffer, VBO
+    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(uniqueVerticesPos), uniqueVerticesPos, GL_STATIC_DRAW);
+    // setup vertex attribute within vertex shader
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glBindVertexArray(0); // unbind vao when done with setup
+
+
+    // light source
+    unsigned int lightSourceVAO;
+    glGenVertexArrays(1, &lightSourceVAO);
+    glBindVertexArray(lightSourceVAO);
+    // need only bind to vbo, contain vbo data already contains data
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glBindVertexArray(0); 
+
+
+
+
+
 
     // tell opengl which texture unit (location of a texture) each shader sample uniform belongs to. need only do once
     ourShader.use();
@@ -327,44 +425,66 @@ int main()
 
         // activate program. every rendering call after will now use this program
         // object and thus the shaders
-        ourShader.use();
+        lightSourceShader.use();
 
-        // adjust transition between the 2 textures
-        ourShader.setFloat("visVal", mixValue);
+        // model matrix for light source cube
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, lightPos); // move cube to light source pos
+        model = glm::scale(model, glm::vec3(0.2f));
+        lightSourceShader.setMat("model", model);
 
         // camera/view matrix
         glm::mat4 view = camera.GetViewMatrix();
-        ourShader.setMat("view", view);
+        lightSourceShader.setMat("view", view);
         
         // projection matrix
         glm::mat4 projection;
         projection = glm::perspective(glm::radians(camera.Zoom), 800.0f/600.0f, 0.1f, 100.0f);
-        ourShader.setMat("projection", projection);
+        lightSourceShader.setMat("projection", projection);
 
-        // bind texture, using texture unit (location of a texture)
-        glActiveTexture(GL_TEXTURE0); // activate texture unit first before binding texture
-        glBindTexture(GL_TEXTURE_2D, texture[0]);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture[1]);
+        lightSourceShader.use();
+        glBindVertexArray(lightSourceVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
+        lightingShader.use();
+        glm::mat4 model2 = glm::mat4(1.0f);
+        model2 = glm::translate(model2, glm::vec3(0.0f, 0.0f, 0.0f)); // move to center of world space
+        lightingShader.setMat("model", model2);
+
+        // camera/view matrix
+        lightingShader.setMat("view", view);
+
+        // projection matrix
+        lightingShader.setMat("projection", projection);
+        glBindVertexArray(lightObjectVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
+
+
+
+
+        
 
         // bind vao for drawing triangle
-        glBindVertexArray(VAO);
-        for (unsigned int i = 0; i < 10; i++)
-        {
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, cubePositions[i]);
-            float angle = 20.0f * i;
-            angle = glm::radians(angle);
+        //glBindVertexArray(VAO);
+        //for (unsigned int i = 0; i < 10; i++)
+        //{
+        //    glm::mat4 model = glm::mat4(1.0f);
+        //    model = glm::translate(model, cubePositions[i]);
+        //    float angle = 20.0f * i;
+        //    angle = glm::radians(angle);
 
-            if (i % 3 == 0)
-            {
-                angle = (float)glfwGetTime() * 10.0f;
-            }
-            model = glm::rotate(model, angle, glm::vec3(1.0f, 0.3f, 0.05f)); // rot at angle degrees a second
-            ourShader.setMat("model", model);
-            
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
+        //    if (i % 3 == 0)
+        //    {
+        //        angle = (float)glfwGetTime() * 10.0f;
+        //    }
+        //    model = glm::rotate(model, angle, glm::vec3(1.0f, 0.3f, 0.05f)); // rot at angle degrees a second
+        //    ourShader.setMat("model", model);
+        //    
+        //    glDrawArrays(GL_TRIANGLES, 0, 36);
+        //}
 
         // CHECK AND CALL EVENTS AND SWAP BUFFERS:
         // swap color buffer used torender and show as ouput to screen
