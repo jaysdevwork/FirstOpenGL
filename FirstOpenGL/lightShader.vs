@@ -13,5 +13,10 @@ void main()
 {
 	gl_Position = projection * view * model * vec4(aPos, 1.0);
 	FragPos = vec3(model * vec4(aPos, 1.0)); // get vertex in world space coords for lighting calc
-	Normal = aNormal;
+	// normal matrix defiend as transpose of the inverse of the upper-left 3x3 part of model matrix.
+	// only needed for non-uniform scaling that may occur
+	// inversing matrices costly for shaders. better way is to calculate on cpu and send here as uniform
+	Normal = mat3(transpose(inverse(model))) * aNormal;
+	
+	//Normal = mat3(model) * aNormal; // fine if no non-uniform scaling
 }

@@ -4,6 +4,7 @@ out vec4 FragColor;
 uniform vec3 objectColor;
 uniform vec3 lightColor;
 uniform vec3 lightPos;
+uniform vec3 viewPos;
 
 in vec3 Normal;
 in vec3 FragPos; // GPU takes 3 triangle vertices and interpolates between them to generate a unique FragPos value for every fragment/pixel that lies within the triangle.
@@ -14,7 +15,14 @@ void main()
 	// usually dont care abt magnitude of a vec or pos, only direction for lighting
 	// so normalize to simplify calculations
 	vec3 norm = normalize(Normal);
-	vec3 lightDir = normalize(lightPos - FragPos);
+	vec3 lightDir = normalize(lightPos - FragPos); // from frag to light source
+
+	// specular calcs
+	float specularStrength = 0.5;
+	vec3 viewDir = normalize(viewPos - FragPos);
+	vec3 reflectDir = reflect(-lightDir, norm);
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32); // last param is shininess 
+	vec3 specular = specularStrength * spec * lightColor;
 
 	// max bc dot prod will go neg if angle greater than 90
 	// if orthogonal, then means light ray is parllel to surface thus 0 diff
@@ -25,6 +33,6 @@ void main()
 	float ambientStrength = 0.1;
 	vec3 ambient = ambientStrength * lightColor;
 
-	vec3 result = (ambient + diffuse) * objectColor;
+	vec3 result = (ambient + diffuse + specular) * objectColor;
 	FragColor = vec4(result, 1.0);
 }

@@ -421,15 +421,28 @@ int main()
         // bitwise flag used to combine into one value
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // specifcied color buffer. STATE-USING (uses curr state to retrieve clearing color from)
 
+
         // activate program. every rendering call after will now use this program
         // object and thus the shaders
         lightSourceShader.use();
 
         // model matrix for light source cube
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, lightPos); // move cube to light source pos
+        //model = glm::translate(model, lightPos); // move cube to light source pos
+
+        const float radius = 1.0f;
+        float sourceX = sin(glfwGetTime()) * radius;
+        float sourceZ = cos(glfwGetTime()) * radius;
+        lightPos = glm::vec3(sourceX, 1, sourceZ);
+        model = glm::translate(model, glm::vec3(lightPos.x, 1.0f, lightPos.z)); // rot at angle degrees a second
+
         model = glm::scale(model, glm::vec3(0.2f));
+
+
+
         lightSourceShader.setMat("model", model);
+
+
 
         // camera/view matrix
         glm::mat4 view = camera.GetViewMatrix();
@@ -446,9 +459,15 @@ int main()
 
 
         lightingShader.use();
+        lightingShader.setVec3("viewPos", camera.Position.x, camera.Position.y, camera.Position.z);
         lightingShader.setVec3("lightPos", lightPos.x, lightPos.y, lightPos.z);
         glm::mat4 model2 = glm::mat4(1.0f);
         model2 = glm::translate(model2, glm::vec3(0.0f, 0.0f, 0.0f)); // move to center of world space
+        
+        float angle2 = (float)glfwGetTime() * 0.0f;
+        model2 = glm::rotate(model2, angle2, glm::vec3(0.0f, 1.0f, 0.0f)); // rot at angle degrees a second
+
+
         lightingShader.setMat("model", model2);
 
         // camera/view matrix
