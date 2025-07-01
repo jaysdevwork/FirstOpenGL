@@ -341,6 +341,16 @@ int main()
     lightingShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
     lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 
+    lightingShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
+    lightingShader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
+    lightingShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+    lightingShader.setFloat("material.shininess", 32.0f); // radius of specular highlight
+
+    // light intensities
+    lightingShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
+    lightingShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f); // darken diffuse lighting a bit
+    lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+
     // cube to cast light on 
     unsigned int lightObjectVAO;
     glGenVertexArrays(1, &lightObjectVAO);
@@ -434,14 +444,14 @@ int main()
         float sourceX = sin(glfwGetTime()) * radius;
         float sourceZ = cos(glfwGetTime()) * radius;
         lightPos = glm::vec3(sourceX, 1, sourceZ);
-        model = glm::translate(model, glm::vec3(lightPos.x, 1.0f, lightPos.z)); // rot at angle degrees a second
+        //model = glm::translate(model, glm::vec3(lightPos.x, 1.0f, lightPos.z)); // rot at angle degrees a second
+        model = glm::translate(model, glm::vec3(1.0f, 1.0f, 1.0f));
 
         model = glm::scale(model, glm::vec3(0.2f));
 
 
 
         lightSourceShader.setMat("model", model);
-
 
 
         // camera/view matrix
@@ -459,8 +469,20 @@ int main()
 
 
         lightingShader.use();
+
+        glm::vec3 lightColor;
+        lightColor.x = sin(glfwGetTime() * 2.0f);
+        lightColor.y = sin(glfwGetTime() * 0.7f);
+        lightColor.z = sin(glfwGetTime() * 1.3f);
+
+        glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
+        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f);
+
+        lightingShader.setVec3("light.ambient", ambientColor.x, ambientColor.y, ambientColor.z);
+        lightingShader.setVec3("light.diffuse", diffuseColor.x, diffuseColor.y, diffuseColor.z);
+
         lightingShader.setVec3("viewPos", camera.Position.x, camera.Position.y, camera.Position.z);
-        lightingShader.setVec3("lightPos", lightPos.x, lightPos.y, lightPos.z);
+        lightingShader.setVec3("light.position", 1.0f, 1.0f, 1.0f);
         glm::mat4 model2 = glm::mat4(1.0f);
         model2 = glm::translate(model2, glm::vec3(0.0f, 0.0f, 0.0f)); // move to center of world space
         
@@ -475,6 +497,8 @@ int main()
 
         // projection matrix
         lightingShader.setMat("projection", projection);
+
+
         glBindVertexArray(lightObjectVAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
