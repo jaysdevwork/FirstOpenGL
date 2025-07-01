@@ -331,7 +331,6 @@ int main()
     Shader lightingShader("D:/FirstOpenGLTutorial/FirstOpenGL/lightShader.vs",
         "D:/FirstOpenGLTutorial/FirstOpenGL/lightShader.fs");
     lightingShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
-    lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 
     Shader lightSourceShader("D:/FirstOpenGLTutorial/FirstOpenGL/lightSourceShader.vs",
         "D:/FirstOpenGLTutorial/FirstOpenGL/lightSourceShader.fs");
