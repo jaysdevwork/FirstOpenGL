@@ -20,99 +20,49 @@
 glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
 // unique vertices of rectangle
-//  storing three vec3 vertex attributes, position, color, texture coords
 float uniqueVertices[] = {
-    // Back face (red tones)
-    -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,  0.8f, 0.2f, 0.0f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.2f,  1.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.2f,  1.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,  0.9f, 0.1f, 0.1f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+    // positions          // normals           // texture coords
+    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
+     0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
 
-    // Front face (green tones)
-    -0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  0.2f, 0.8f, 0.0f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.2f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.2f,  1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.1f, 0.9f, 0.1f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
 
-    // Left face (blue tones)
-    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  1.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  0.2f, 0.0f, 0.8f,  1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.2f, 1.0f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, 0.2f, 1.0f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.1f, 0.1f, 0.9f,  0.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,  1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
 
-    // Right face (yellow tones)
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  0.8f, 0.8f, 0.2f,  1.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 0.8f, 0.0f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f, 0.8f, 0.0f,  0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  0.9f, 0.9f, 0.1f,  0.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+     0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
 
-     // Bottom face (purple tones)
-     -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 1.0f,  0.0f, 1.0f,
-      0.5f, -0.5f, -0.5f,  0.8f, 0.2f, 0.8f,  1.0f, 1.0f,
-      0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.8f,  1.0f, 0.0f,
-      0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.8f,  1.0f, 0.0f,
-     -0.5f, -0.5f,  0.5f,  0.9f, 0.1f, 0.9f,  0.0f, 0.0f,
-     -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 1.0f,  0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
+     0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
+     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
+    -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
+    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
 
-     // Top face (cyan tones)
-     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 1.0f,  0.0f, 1.0f,
-      0.5f,  0.5f, -0.5f,  0.2f, 0.8f, 0.8f,  1.0f, 1.0f,
-      0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.8f,  1.0f, 0.0f,
-      0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.8f,  1.0f, 0.0f,
-     -0.5f,  0.5f,  0.5f,  0.1f, 0.9f, 0.9f,  0.0f, 0.0f,
-     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 1.0f,  0.0f, 1.0f
-};
-
-float uniqueVerticesPos[] = {
-    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
-     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
-     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
-    -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
-    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 
-
-    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-
-    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-    -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-    -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-
-     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-     0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-
-    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-
-    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-     0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
+     0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
+    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
 };
 
 
@@ -240,64 +190,87 @@ int main()
     }
 
    
-    // setup textures
-    unsigned int texture[2];
-    glGenTextures(2, texture); // generate two texture ids
-    // just like other objects, bind so any subsequent texture commands config curr bound txture
-    glBindTexture(GL_TEXTURE_2D, texture[0]);
-    // set texture wrapping/filtering options on currently bound txture obj
+    //// setup textures
+    //unsigned int texture[2];
+    //glGenTextures(2, texture); // generate two texture ids
+    //// just like other objects, bind so any subsequent texture commands config curr bound txture
+    //glBindTexture(GL_TEXTURE_2D, texture[0]);
+    //// set texture wrapping/filtering options on currently bound txture obj
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST); // option for txture filtering between mipmap levels
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // cant set mipmap filtering options as mag filter
+    //// LOAD IMAGE using stb_image library
+    //int width, height, nrChannels;
+    //unsigned char* data = stbi_load("C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/Resources/container.jpg", &width, &height, &nrChannels, 0);
+    //if (data)
+    //{
+    //    // generate texture
+    //    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    //    glGenerateMipmap(GL_TEXTURE_2D);
+    //} 
+    //else 
+    //{
+    //    std::cout << "Failed to load texture" << std::endl;
+    //}
+    //stbi_image_free(data); // free image memory
+
+    //// setup texture 2
+    //glBindTexture(GL_TEXTURE_2D, texture[1]);
+    //// set texture wrapping/filtering options on currently bound txture obj
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST); // option for txture filtering between mipmap levels
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // cant set mipmap filtering options as mag filter
+    //// LOAD IMAGE 2
+    //stbi_set_flip_vertically_on_load(true); // flip y axis during image loading bc image has 0 for y as top
+    //unsigned char* data2 = stbi_load("C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/Resources/awesomeface.png", &width, &height, &nrChannels, 0);
+    //if (data2)
+    //{
+    //    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data2);
+    //    glGenerateMipmap(GL_TEXTURE_2D);
+    //}
+    //stbi_image_free(data2); // free image memory
+
+    unsigned int diffuseTexture;
+    glGenTextures(1, &diffuseTexture); // just like other objects, bind so any subsequent texture commands config curr bound txture
+    glBindTexture(GL_TEXTURE_2D, diffuseTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST); // option for txture filtering between mipmap levels
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // cant set mipmap filtering options as mag filter
     // LOAD IMAGE using stb_image library
     int width, height, nrChannels;
-    unsigned char* data = stbi_load("C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/Resources/container.jpg", &width, &height, &nrChannels, 0);
-    if (data)
+    unsigned char* data3 = stbi_load("D:/FirstOpenGLTutorial/FirstOpenGL/Resources/container2.png", &width, &height, &nrChannels, 0);
+    if (data3)
     {
         // generate texture
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data3);
         glGenerateMipmap(GL_TEXTURE_2D);
-    } 
-    else 
+    }
+    else
     {
         std::cout << "Failed to load texture" << std::endl;
     }
-    stbi_image_free(data); // free image memory
+    stbi_image_free(data3); // free image memory
 
-    // setup texture 2
-    glBindTexture(GL_TEXTURE_2D, texture[1]);
-    // set texture wrapping/filtering options on currently bound txture obj
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST); // option for txture filtering between mipmap levels
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // cant set mipmap filtering options as mag filter
-    // LOAD IMAGE 2
-    stbi_set_flip_vertically_on_load(true); // flip y axis during image loading bc image has 0 for y as top
-    unsigned char* data2 = stbi_load("C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/Resources/awesomeface.png", &width, &height, &nrChannels, 0);
-    if (data2)
-    {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data2);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    stbi_image_free(data2); // free image memory
-
-
-
-    // ALL OF THIS MUST COME AFTER INIT GLFW AND GLAD!!
-    // create shader object: reads from disk, compiles, links, and checks for errors for vertex and fragment shaders
-    // this encapsulates alot of code
-    Shader ourShader("D:/FirstOpenGLTutorial/FirstOpenGL/shader.vs",
-        "D:/FirstOpenGLTutorial/FirstOpenGL/shader.fs");
     
+   
 
-    // create a vertex array object to store configuration
-    // i.e. vertex attribute config and which vbo to use
-    unsigned int VAO;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO); // to use vao, this point on bind corresponding VBOs and attribute points. then unbind for later use
+    //// ALL OF THIS MUST COME AFTER INIT GLFW AND GLAD!!
+    //// create shader object: reads from disk, compiles, links, and checks for errors for vertex and fragment shaders
+    //// this encapsulates alot of code
+    //Shader ourShader("D:/FirstOpenGLTutorial/FirstOpenGL/shader.vs",
+    //    "D:/FirstOpenGLTutorial/FirstOpenGL/shader.fs");
+    //
 
-    // vertex buffer object for storing large num of vertices in GPU memory
+    //// create a vertex array object to store configuration
+    //// i.e. vertex attribute config and which vbo to use
+    //unsigned int VAO;
+    //glGenVertexArrays(1, &VAO);
+    //glBindVertexArray(VAO); // to use vao, this point on bind corresponding VBOs and attribute points. then unbind for later use
+
+    //// vertex buffer object for storing large num of vertices in GPU memory
     unsigned int VBO;
     glGenBuffers(1, &VBO);
     // bind buffer to buffer type
@@ -307,25 +280,25 @@ int main()
     // copy vertex data into currently bound buffer memory
     glBufferData(GL_ARRAY_BUFFER, sizeof(uniqueVertices), uniqueVertices, GL_STATIC_DRAW);
 
-    // specify order to draw vertices in with a element buffer object
-    //unsigned int EBO;
-    //glGenBuffers(1, &EBO);
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    //// specify order to draw vertices in with a element buffer object
+    ////unsigned int EBO;
+    ////glGenBuffers(1, &EBO);
+    ////glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    ////glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 
-    // specify how opengl should interpret vertex data
-    // tells opengl how to link vertex data to the vertex shader's shader attributes
-    // vbo bound to gl_array_buffer, so vertex attribute 0 now assoc with its vertex data
-    // POSITION ATTRIBUTE
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // 1st param is LOCATION in vertex shader to pass to
-    glEnableVertexAttribArray(0);
-    // COLOR ATTRIBUTE
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float))); // last param is offset to place after pos data in VBO memory
-    glEnableVertexAttribArray(1);
-    // TEXTURE COORDINATE ATTRIBUTE 
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
+    //// specify how opengl should interpret vertex data
+    //// tells opengl how to link vertex data to the vertex shader's shader attributes
+    //// vbo bound to gl_array_buffer, so vertex attribute 0 now assoc with its vertex data
+    //// POSITION ATTRIBUTE
+    //glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // 1st param is LOCATION in vertex shader to pass to
+    //glEnableVertexAttribArray(0);
+    //// NORMAL ATTRIBUTE
+    //glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float))); // last param is offset to place after pos data in VBO memory
+    //glEnableVertexAttribArray(1);
+    //// TEXTURE COORDINATE ATTRIBUTE 
+    //glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    //glEnableVertexAttribArray(2);
 
 
     Shader lightingShader("D:/FirstOpenGLTutorial/FirstOpenGL/lightShader.vs",
@@ -337,13 +310,13 @@ int main()
 
     // must use shader program first to set uniforms
     lightingShader.use();
-    lightingShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+    glm::vec3 normalizedColor = glm::vec3(211.0f / 255.0f, 175.0f / 255.0f, 55.0f / 255.0f);
+    lightingShader.setVec3("objectColor", normalizedColor.x, normalizedColor.y, normalizedColor.z);
     lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 
-    lightingShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
-    lightingShader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
-    lightingShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
-    lightingShader.setFloat("material.shininess", 32.0f); // radius of specular highlight
+    lightingShader.setInt("material.diffuse", 0);
+    lightingShader.setVec3("material.specular", 0.628281f, 0.555802f, 0.366065f);
+    lightingShader.setFloat("material.shininess", 0.4f); // radius of specular highlight
 
     // light intensities
     lightingShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
@@ -355,18 +328,15 @@ int main()
     glGenVertexArrays(1, &lightObjectVAO);
     glBindVertexArray(lightObjectVAO); // to use vao, this point on bind corresponding VBOs and attribute points. then unbind for later use
 
-    unsigned int VBO2;
-    glGenBuffers(1, &VBO2);
-    // from this point on any buffer calls make on GL_ARRAY_BUFFER target will be used to config the currently
-    // bound buffer, VBO
-    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(uniqueVerticesPos), uniqueVerticesPos, GL_STATIC_DRAW);
     // setup vertex attribute within vertex shader
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0); // strides of 6 bc of total vertex attributes (pos and normal), last param is offset for next v. attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // strides of 6 bc of total vertex attributes (pos and normal), last param is offset for next v. attribute
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
     glBindVertexArray(0); // unbind vao when done with setup
+    
 
 
     // light source.
@@ -374,9 +344,7 @@ int main()
     unsigned int lightSourceVAO;
     glGenVertexArrays(1, &lightSourceVAO);
     glBindVertexArray(lightSourceVAO);
-    // need only bind to vbo, contain vbo data already contains data
-    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0); // make strides of 6, using only first 3 floats
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // make strides of 8, using only first 3 floats
     glEnableVertexAttribArray(0);
     glBindVertexArray(0); 
 
@@ -385,10 +353,11 @@ int main()
 
 
 
+
     // tell opengl which texture unit (location of a texture) each shader sample uniform belongs to. need only do once
-    ourShader.use();
-    ourShader.setInt("texture1", 0); // 0 is corresponding texture unit of texture[0]. texture1 is sampler var name
-    ourShader.setInt("texture2", 1);
+    //ourShader.use();
+    //ourShader.setInt("texture1", 0); // 0 is corresponding texture unit of texture[0]. texture1 is sampler var name
+    //ourShader.setInt("texture2", 1);
 
 
     // old glm learning code
@@ -419,6 +388,11 @@ int main()
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
+        glm::vec3 lightColor;
+        lightColor.x = sin(glfwGetTime() * 2.0f);
+        lightColor.y = sin(glfwGetTime() * 0.7f);
+        lightColor.z = sin(glfwGetTime() * 1.3f);
+
         // INPUT:
         processInput(window);
 
@@ -435,6 +409,7 @@ int main()
         // object and thus the shaders
         lightSourceShader.use();
 
+        lightSourceShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
         // model matrix for light source cube
         glm::mat4 model = glm::mat4(1.0f);
         //model = glm::translate(model, lightPos); // move cube to light source pos
@@ -448,8 +423,6 @@ int main()
 
         model = glm::scale(model, glm::vec3(0.2f));
 
-
-
         lightSourceShader.setMat("model", model);
 
 
@@ -462,6 +435,7 @@ int main()
         projection = glm::perspective(glm::radians(camera.Zoom), 800.0f/600.0f, 0.1f, 100.0f);
         lightSourceShader.setMat("projection", projection);
 
+
         lightSourceShader.use();
         glBindVertexArray(lightSourceVAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -469,16 +443,11 @@ int main()
 
         lightingShader.use();
 
-        glm::vec3 lightColor;
-        lightColor.x = sin(glfwGetTime() * 2.0f);
-        lightColor.y = sin(glfwGetTime() * 0.7f);
-        lightColor.z = sin(glfwGetTime() * 1.3f);
-
         glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
         glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f);
 
-        lightingShader.setVec3("light.ambient", ambientColor.x, ambientColor.y, ambientColor.z);
-        lightingShader.setVec3("light.diffuse", diffuseColor.x, diffuseColor.y, diffuseColor.z);
+        lightingShader.setVec3("light.ambient", 1.0f, 1.0f, 1.0f);
+        lightingShader.setVec3("light.diffuse", 1.0f, 1.0f, 1.0f);
 
         lightingShader.setVec3("viewPos", camera.Position.x, camera.Position.y, camera.Position.z);
         lightingShader.setVec3("light.position", 1.0f, 1.0f, 1.0f);
@@ -497,15 +466,11 @@ int main()
         // projection matrix
         lightingShader.setMat("projection", projection);
 
+        glActiveTexture(GL_TEXTURE0); // activate texture unit first before binding texture
+        glBindTexture(GL_TEXTURE_2D, diffuseTexture);
 
         glBindVertexArray(lightObjectVAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
-
-
-
-
-
-
         
 
         // bind vao for drawing triangle

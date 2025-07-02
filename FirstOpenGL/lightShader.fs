@@ -2,8 +2,7 @@
 out vec4 FragColor;
 
 struct Material{
-	vec3 ambient;
-	vec3 diffuse;
+	sampler2D diffuse;
 	vec3 specular;
 	float shininess;
 };
@@ -25,7 +24,7 @@ uniform vec3 viewPos;
 in vec3 Normal;
 // per fragment world pos
 in vec3 FragPos; // GPU takes 3 triangle vertices and interpolates between them to generate a unique FragPos value for every fragment/pixel that lies within the triangle.
-
+in vec2 TexCoords;
 
 void main()
 {
@@ -44,9 +43,9 @@ void main()
 	// if orthogonal, then means light ray is parllel to surface thus 0 diff
 	float diff = max(dot(norm, lightDir), 0.0); // diffuse impact of light on current frag
 	// greater the angle, darker the diffuse 
-	vec3 diffuse = light.diffuse * (diff * material.diffuse);
+	vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoords));
 
-	vec3 ambient = light.ambient * material.ambient;
+	vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords)); // ambient controlled with light
 
 	vec3 result = (ambient + diffuse + specular) * objectColor;
 	FragColor = vec4(result, 1.0);
