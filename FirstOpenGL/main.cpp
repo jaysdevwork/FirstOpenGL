@@ -254,6 +254,28 @@ int main()
     }
     stbi_image_free(data3); // free image memory
 
+    unsigned int specularTexture;
+    glGenTextures(1, &specularTexture); // just like other objects, bind so any subsequent texture commands config curr bound txture
+    glBindTexture(GL_TEXTURE_2D, specularTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST); // option for txture filtering between mipmap levels
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // cant set mipmap filtering options as mag filter
+    // LOAD IMAGE using stb_image library
+    int width1, height1, nrChannels1;
+    unsigned char* data4 = stbi_load("D:/FirstOpenGLTutorial/FirstOpenGL/Resources/container2_specular.png", &width1, &height1, &nrChannels1, 0);
+    if (data4)
+    {
+        // generate texture
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width1, height1, 0, GL_RGBA, GL_UNSIGNED_BYTE, data4);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data4); // free image memory
+
     
    
 
@@ -314,13 +336,14 @@ int main()
     lightingShader.setVec3("objectColor", normalizedColor.x, normalizedColor.y, normalizedColor.z);
     lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 
-    lightingShader.setInt("material.diffuse", 0);
-    lightingShader.setVec3("material.specular", 0.628281f, 0.555802f, 0.366065f);
-    lightingShader.setFloat("material.shininess", 0.4f); // radius of specular highlight
+    lightingShader.setInt("material.diffuse", 0); // set texture unit
+    lightingShader.setInt("material.specular", 1);
+    lightingShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+    lightingShader.setFloat("material.shininess", 64.0f); // radius of specular highlight
 
     // light intensities
     lightingShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
-    lightingShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f); // darken diffuse lighting a bit
+    lightingShader.setVec3("light.diffuse", 0.8f, 0.8f, 0.8f); // darken diffuse lighting a bit
     lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
 
     // cube to cast light on 
@@ -349,7 +372,7 @@ int main()
     glBindVertexArray(0); 
 
 
-
+ 
 
 
 
@@ -409,7 +432,7 @@ int main()
         // object and thus the shaders
         lightSourceShader.use();
 
-        lightSourceShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z);
+        //lightSourceShader.setVec3("lightColor", lightColor.x, lightColor.y, lightColor.z); change color of light
         // model matrix for light source cube
         glm::mat4 model = glm::mat4(1.0f);
         //model = glm::translate(model, lightPos); // move cube to light source pos
@@ -418,8 +441,8 @@ int main()
         float sourceX = sin(glfwGetTime()) * radius;
         float sourceZ = cos(glfwGetTime()) * radius;
         lightPos = glm::vec3(sourceX, 1, sourceZ);
-        //model = glm::translate(model, glm::vec3(lightPos.x, 1.0f, lightPos.z)); // rot at angle degrees a second
-        model = glm::translate(model, glm::vec3(1.0f, 1.0f, 1.0f));
+        model = glm::translate(model, glm::vec3(lightPos.x, 1.0f, lightPos.z)); // rot at angle degrees a second
+        //model = glm::translate(model, glm::vec3(1.0f, 1.0f, 1.0f));
 
         model = glm::scale(model, glm::vec3(0.2f));
 
@@ -442,15 +465,8 @@ int main()
 
 
         lightingShader.use();
-
-        glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f);
-        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f);
-
-        lightingShader.setVec3("light.ambient", 1.0f, 1.0f, 1.0f);
-        lightingShader.setVec3("light.diffuse", 1.0f, 1.0f, 1.0f);
-
         lightingShader.setVec3("viewPos", camera.Position.x, camera.Position.y, camera.Position.z);
-        lightingShader.setVec3("light.position", 1.0f, 1.0f, 1.0f);
+        lightingShader.setVec3("light.position", lightPos.x, lightPos.y, lightPos.z);
         glm::mat4 model2 = glm::mat4(1.0f);
         model2 = glm::translate(model2, glm::vec3(0.0f, 0.0f, 0.0f)); // move to center of world space
         
@@ -469,28 +485,12 @@ int main()
         glActiveTexture(GL_TEXTURE0); // activate texture unit first before binding texture
         glBindTexture(GL_TEXTURE_2D, diffuseTexture);
 
+        glActiveTexture(GL_TEXTURE1); // activate texture unit first before binding texture
+        glBindTexture(GL_TEXTURE_2D, specularTexture);
+
         glBindVertexArray(lightObjectVAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         
-
-        // bind vao for drawing triangle
-        //glBindVertexArray(VAO);
-        //for (unsigned int i = 0; i < 10; i++)
-        //{
-        //    glm::mat4 model = glm::mat4(1.0f);
-        //    model = glm::translate(model, cubePositions[i]);
-        //    float angle = 20.0f * i;
-        //    angle = glm::radians(angle);
-
-        //    if (i % 3 == 0)
-        //    {
-        //        angle = (float)glfwGetTime() * 10.0f;
-        //    }
-        //    model = glm::rotate(model, angle, glm::vec3(1.0f, 0.3f, 0.05f)); // rot at angle degrees a second
-        //    ourShader.setMat("model", model);
-        //    
-        //    glDrawArrays(GL_TRIANGLES, 0, 36);
-        //}
 
         // CHECK AND CALL EVENTS AND SWAP BUFFERS:
         // swap color buffer used torender and show as ouput to screen
