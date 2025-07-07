@@ -4,6 +4,7 @@ out vec4 FragColor;
 struct Material{
 	sampler2D diffuse;
 	sampler2D specular;
+	sampler2D emission;
 	float shininess;
 };
 
@@ -37,16 +38,22 @@ void main()
 	vec3 viewDir = normalize(viewPos - FragPos);
 	vec3 reflectDir = reflect(-lightDir, norm);
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess); // last param is shininess 
-	vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords));
+	vec3 specular = light.specular * spec * (vec3(1.0) - vec3(texture(material.specular, TexCoords)));
 
 	// max bc dot prod will go neg if angle greater than 90
 	// if orthogonal, then means light ray is parllel to surface thus 0 diff
 	float diff = max(dot(norm, lightDir), 0.0); // diffuse impact of light on current frag
 	// greater the angle, darker the diffuse 
-	vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoords)); // sample material.diffuse texture at texcoords (interpolated in frag)
+	vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoords)); // sample material.diffuse texture at texcoords ()
 
 	vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords)); // ambient controlled with light
 
-	vec3 result = (ambient + diffuse + specular);
+	
+	// (HACK) sample the emission texture only where the specular map is black (the middle of the crate)
+	vec3 specularTexel = texture(material.specular, TexCoords).rgb;
+	vec3 emission = specularTexel == vec3(0.0) ? texture(material.emission, TexCoords).rgb : vec3(0.0);
+
+
+	vec3 result = (ambient + diffuse + specular + emission);
 	FragColor = vec4(result, 1.0);
 }

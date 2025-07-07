@@ -276,6 +276,28 @@ int main()
     }
     stbi_image_free(data4); // free image memory
 
+    unsigned int emissionTexture;
+    glGenTextures(1, &emissionTexture); // just like other objects, bind so any subsequent texture commands config curr bound txture
+    glBindTexture(GL_TEXTURE_2D, emissionTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST); // option for txture filtering between mipmap levels
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // cant set mipmap filtering options as mag filter
+    // LOAD IMAGE using stb_image library
+    int width2, height2, nrChannels2;
+    unsigned char* data5 = stbi_load("D:/FirstOpenGLTutorial/FirstOpenGL/Resources/matrix.jpg", &width2, &height2, &nrChannels2, 0);
+    if (data5)
+    {
+        // generate texture
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width2, height2, 0, GL_RGB, GL_UNSIGNED_BYTE, data5);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data5); // free image memory
+
     
    
 
@@ -338,12 +360,13 @@ int main()
 
     lightingShader.setInt("material.diffuse", 0); // set texture unit
     lightingShader.setInt("material.specular", 1);
+    lightingShader.setInt("material.emission", 2);
     lightingShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
     lightingShader.setFloat("material.shininess", 64.0f); // radius of specular highlight
 
     // light intensities
     lightingShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
-    lightingShader.setVec3("light.diffuse", 0.8f, 0.8f, 0.8f); // darken diffuse lighting a bit
+    lightingShader.setVec3("light.diffuse", 1.0f, 1.0f, 1.0f); // darken diffuse lighting a bit
     lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
 
     // cube to cast light on 
@@ -437,11 +460,11 @@ int main()
         glm::mat4 model = glm::mat4(1.0f);
         //model = glm::translate(model, lightPos); // move cube to light source pos
 
-        const float radius = 1.0f;
+        const float radius = 1.5f;
         float sourceX = sin(glfwGetTime()) * radius;
         float sourceZ = cos(glfwGetTime()) * radius;
         lightPos = glm::vec3(sourceX, 1, sourceZ);
-        model = glm::translate(model, glm::vec3(lightPos.x, 1.0f, lightPos.z)); // rot at angle degrees a second
+        model = glm::translate(model, glm::vec3(lightPos.x, 0.5f, lightPos.z)); // rot at angle degrees a second
         //model = glm::translate(model, glm::vec3(1.0f, 1.0f, 1.0f));
 
         model = glm::scale(model, glm::vec3(0.2f));
@@ -487,6 +510,9 @@ int main()
 
         glActiveTexture(GL_TEXTURE1); // activate texture unit first before binding texture
         glBindTexture(GL_TEXTURE_2D, specularTexture);
+
+        glActiveTexture(GL_TEXTURE2); // activate texture unit first before binding texture
+        glBindTexture(GL_TEXTURE_2D, emissionTexture);
 
         glBindVertexArray(lightObjectVAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
