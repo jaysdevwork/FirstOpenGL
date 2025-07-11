@@ -9,7 +9,8 @@ struct Material{
 };
 
 struct Light{
-	vec3 position;
+	//vec3 position;
+	vec3 direction;
 
 	vec3 ambient;
 	vec3 diffuse;
@@ -32,13 +33,14 @@ void main()
 	// usually dont care abt magnitude of a vec or pos, only direction for lighting
 	// so normalize to simplify calculations
 	vec3 norm = normalize(Normal);
-	vec3 lightDir = normalize(light.position - FragPos); // from frag to light source
+	//vec3 lightDir = normalize(light.position - FragPos); // from frag to light source
+	vec3 lightDir = normalize(-light.direction); // pointing towards light source
 
 	// specular calcs
 	vec3 viewDir = normalize(viewPos - FragPos);
 	vec3 reflectDir = reflect(-lightDir, norm);
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess); // last param is shininess 
-	vec3 specular = light.specular * spec * (vec3(1.0) - vec3(texture(material.specular, TexCoords)));
+	vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords));
 
 	// max bc dot prod will go neg if angle greater than 90
 	// if orthogonal, then means light ray is parllel to surface thus 0 diff
@@ -47,6 +49,7 @@ void main()
 	vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoords)); // sample material.diffuse texture at texcoords ()
 
 	vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords)); // ambient controlled with light
+
 
 	
 	// (HACK) sample the emission texture only where the specular map is black (the middle of the crate)
