@@ -354,7 +354,13 @@ int main()
 
     // must use shader program first to set uniforms
     lightingShader.use();
-    lightingShader.setVec3("light.direction", -0.2f, -1.0f, -0.3f); // direction from light source
+
+    //lightingShader.setVec3("light.direction", -0.2f, -1.0f, -0.3f); // direction from light source
+    lightingShader.setFloat("light.constant", 1.0f);
+    lightingShader.setFloat("light.linear", 0.09f);
+    lightingShader.setFloat("light.quadratic", 0.032f);
+
+
     glm::vec3 normalizedColor = glm::vec3(211.0f / 255.0f, 175.0f / 255.0f, 55.0f / 255.0f);
     lightingShader.setVec3("objectColor", normalizedColor.x, normalizedColor.y, normalizedColor.z);
     lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
@@ -490,7 +496,7 @@ int main()
 
         lightingShader.use();
         lightingShader.setVec3("viewPos", camera.Position.x, camera.Position.y, camera.Position.z);
-        //lightingShader.setVec3("light.position", lightPos.x, lightPos.y, lightPos.z);
+        lightingShader.setVec3("light.position", lightPos.x, lightPos.y, lightPos.z);
         glm::mat4 model2 = glm::mat4(1.0f);
         model2 = glm::translate(model2, glm::vec3(0.0f, 0.0f, 0.0f)); // move to center of world space
         

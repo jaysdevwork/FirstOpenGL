@@ -9,12 +9,16 @@ struct Material{
 };
 
 struct Light{
-	//vec3 position;
-	vec3 direction;
+	vec3 position;
+	//vec3 direction;
 
 	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
+
+	float constant;
+	float linear;
+	float quadratic;
 };
 
 uniform Material material;
@@ -33,8 +37,10 @@ void main()
 	// usually dont care abt magnitude of a vec or pos, only direction for lighting
 	// so normalize to simplify calculations
 	vec3 norm = normalize(Normal);
-	//vec3 lightDir = normalize(light.position - FragPos); // from frag to light source
-	vec3 lightDir = normalize(-light.direction); // pointing towards light source
+	vec3 lightDir = normalize(light.position - FragPos); // from frag to light source
+	float distance = length(light.position - FragPos);
+	float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
+	//vec3 lightDir = normalize(-light.direction); // pointing towards light source
 
 	// specular calcs
 	vec3 viewDir = normalize(viewPos - FragPos);
@@ -50,7 +56,9 @@ void main()
 
 	vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords)); // ambient controlled with light
 
-
+	ambient *= attenuation;
+	diffuse *= attenuation;
+	specular *= attenuation;
 	
 	// (HACK) sample the emission texture only where the specular map is black (the middle of the crate)
 	vec3 specularTexel = texture(material.specular, TexCoords).rgb;
