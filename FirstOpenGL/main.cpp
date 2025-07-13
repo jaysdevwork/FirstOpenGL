@@ -497,7 +497,8 @@ int main()
         lightingShader.use();
         lightingShader.setVec3("light.position", camera.Position.x, camera.Position.y, camera.Position.z);
         lightingShader.setVec3("light.direction", camera.Front.x, camera.Front.y, camera.Front.z);
-        lightingShader.setFloat("light.cutOff", glm::cos(glm::radians(12.5))); // bc we comparing with dot product, which returns cosine value(not converted to angle) in fragment shader
+        lightingShader.setFloat("light.cutOff", glm::cos(glm::radians(12.5f))); // bc we comparing with dot product, which returns cosine value(not converted to angle) in fragment shader
+        lightingShader.setFloat("light.outerCutOff", glm::cos(glm::radians(17.5f)));
 
         lightingShader.setVec3("viewPos", camera.Position.x, camera.Position.y, camera.Position.z);
         //lightingShader.setVec3("light.position", 1.2f, 1.0f, 2.0f);

@@ -12,6 +12,7 @@ struct Light{
 	vec3 position;
 	vec3 direction;
 	float cutOff;
+	float outerCutOff;
 
 	vec3 ambient;
 	vec3 diffuse;
@@ -35,17 +36,14 @@ in vec2 TexCoords;
 
 void main()
 {
-	
-
-
-
 	vec3 lightDir = normalize(light.position - FragPos); // from frag to light source
 
 	// spotlight calcs
 	// as angle increases, theta gets smaller bc its cos val. thus angle must be smaller, for greater theta
 	float theta = dot(lightDir, normalize(-light.direction)); // negate to point towards light source
-	if(theta > light.cutOff) // greater than bc using cos values, where angle of 0 dgrees = cos val 1
-	{
+	float epsilon = light.cutOff - light.outerCutOff;
+	float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
+
 
 	// usually dont care abt magnitude of a vec or pos, only direction for lighting
 	// so normalize to simplify calculations
@@ -71,14 +69,14 @@ void main()
 	ambient *= attenuation;
 	diffuse *= attenuation;
 	specular *= attenuation;
+
+	// for spotlight smooth edges
+	diffuse *= intensity;
+	specular *= intensity;
 	
 	// (HACK) sample the emission texture only where the specular map is black (the middle of the crate)
 	//vec3 specularTexel = texture(material.specular, TexCoords).rgb;
 	//vec3 emission = specularTexel == vec3(0.0) ? texture(material.emission, TexCoords).rgb : vec3(0.0);
 	vec3 result = (ambient + diffuse + specular);
 	FragColor = vec4(result, 1.0);
-	}
-
-	else
-		FragColor = vec4(light.ambient * vec3(texture(material.diffuse, TexCoords)), 1.0);
 }
