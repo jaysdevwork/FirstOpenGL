@@ -372,7 +372,7 @@ int main()
     lightingShader.setFloat("material.shininess", 64.0f); // radius of specular highlight
 
     // light intensities
-    lightingShader.setVec3("light.ambient", 0.1f, 0.1f, 0.1f);
+    lightingShader.setVec3("light.ambient", 0.2f, 0.2f, 0.f);
     lightingShader.setVec3("light.diffuse", 1.0f, 1.0f, 1.0f); // darken diffuse lighting a bit
     lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
 
@@ -471,7 +471,7 @@ int main()
         float sourceX = sin(glfwGetTime()) * radius;
         float sourceZ = cos(glfwGetTime()) * radius;
         lightPos = glm::vec3(sourceX, 1, sourceZ);
-        model = glm::translate(model, glm::vec3(lightPos.x, 0.2f, lightPos.z)); // rot at angle degrees a second
+        model = glm::translate(model, glm::vec3(1.2f, 1.0f, 2.0f)); // rot at angle degrees a second
         //model = glm::translate(model, glm::vec3(1.0f, 1.0f, 1.0f));
 
         model = glm::scale(model, glm::vec3(0.2f));
@@ -495,8 +495,12 @@ int main()
 
 
         lightingShader.use();
+        lightingShader.setVec3("light.position", camera.Position.x, camera.Position.y, camera.Position.z);
+        lightingShader.setVec3("light.direction", camera.Front.x, camera.Front.y, camera.Front.z);
+        lightingShader.setFloat("light.cutOff", glm::cos(glm::radians(12.5))); // bc we comparing with dot product, which returns cosine value(not converted to angle) in fragment shader
+
         lightingShader.setVec3("viewPos", camera.Position.x, camera.Position.y, camera.Position.z);
-        lightingShader.setVec3("light.position", lightPos.x, lightPos.y, lightPos.z);
+        //lightingShader.setVec3("light.position", 1.2f, 1.0f, 2.0f);
         glm::mat4 model2 = glm::mat4(1.0f);
         model2 = glm::translate(model2, glm::vec3(0.0f, 0.0f, 0.0f)); // move to center of world space
         
