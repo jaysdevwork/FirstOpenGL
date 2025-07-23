@@ -6,7 +6,7 @@
 #include "Shader.h"
 #include "Camera.h"
 #include "stb_image.h"
-
+#include "Model.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -380,8 +380,8 @@ int main()
     glBindVertexArray(lightObjectVAO); // to use vao, this point on bind corresponding VBOs and attribute points. then unbind for later use
 
     // setup vertex attribute within vertex shader
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // strides of 6 bc of total vertex attributes (pos and normal), last param is offset for next v. attribute
-    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // strides of 8 bc of total vertex attributes (pos and normal), last param is offset for next v. attribute
+    glEnableVertexAttribArray(0);                                                   // offset is space to where next attrib starts
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
@@ -401,6 +401,7 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); wireframe mode
     // render loop!- iteration of render loop called a FRAME
     // so app keeps drawing images and handle input until told to stop
