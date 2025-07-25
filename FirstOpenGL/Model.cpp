@@ -12,7 +12,7 @@ void Model::Draw(Shader& shader)
 void Model::loadModel(std::string path)
 {
 	Assimp::Importer import;
-	const aiScene *scene = import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+	const aiScene *scene = import.ReadFile(path, aiProcess_Triangulate); // | aiProcess_FlipUVs to flip em
 
 	// check if scene and root node are not null and ensure flags do not indicate incomplete data
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
@@ -48,25 +48,29 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
 	std::vector<unsigned int> indices;
 	std::vector<Texture> textures;
 
+	// Process vertices
 	for (unsigned int i = 0; i < mesh->mNumVertices; i++)
 	{
 		Vertex vertex;
-		// process vertex positions, normals and texture coordinates
-		/// assimp calls their vertex pos array mVertices
+
+		// Process vertex positions
 		glm::vec3 vector;
 		vector.x = mesh->mVertices[i].x;
 		vector.y = mesh->mVertices[i].y;
 		vector.z = mesh->mVertices[i].z;
 		vertex.Position = vector;
 
-		// normals
-		vector.x = mesh->mNormals[i].x;
-		vector.y = mesh->mNormals[i].y;
-		vector.z = mesh->mNormals[i].z;
-		vertex.Normal = vector;
+		// Process normals
+		if (mesh->mNormals)
+		{
+			vector.x = mesh->mNormals[i].x;
+			vector.y = mesh->mNormals[i].y;
+			vector.z = mesh->mNormals[i].z;
+			vertex.Normal = vector;
+		}
 
-		// texture coords
-		if (mesh->mTextureCoords[0]) // does mesh contain texture coords?
+		// Process texture coordinates
+		if (mesh->mTextureCoords[0])
 		{
 			glm::vec2 vec;
 			vec.x = mesh->mTextureCoords[0][i].x;
@@ -77,34 +81,34 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
 		{
 			vertex.TexCoords = glm::vec2(0.0f, 0.0f);
 		}
+
 		vertices.push_back(vertex);
-
-		// store all indices of all faces (face = single primitive)
-		for (unsigned int i = 0; i < mesh->mNumFaces; i++)
-		{
-			aiFace face = mesh->mFaces[i];
-			for (unsigned int j = 0; j < face.mNumIndices; j++)
-			{
-				indices.push_back(face.mIndices[j]);
-			}
-		}
-
-
-
-		if (mesh->mMaterialIndex >= 0) // does mesh contain a material?
-		{
-			// if it does, obtain from scene's material array
-			aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-			// retrieve textures from the material, by type
-			std::vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
-			textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-
-			std::vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
-			textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-		}
-
-		return Mesh(vertices, indices, textures);
 	}
+
+	// Process indices (MOVED OUTSIDE the vertices loop)
+	for (unsigned int i = 0; i < mesh->mNumFaces; i++)
+	{
+		aiFace face = mesh->mFaces[i];
+		for (unsigned int j = 0; j < face.mNumIndices; j++)
+		{
+			indices.push_back(face.mIndices[j]);
+		}
+	}
+
+	// Process material (MOVED OUTSIDE the vertices loop)
+	if (mesh->mMaterialIndex >= 0)
+	{
+		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+
+		std::vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
+
+		std::vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
+		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+	}
+
+	// Return the mesh (MOVED OUTSIDE all loops)
+	return Mesh(vertices, indices, textures);
 }
 
 std::vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName)

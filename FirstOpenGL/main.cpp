@@ -12,6 +12,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+
 glm::vec3 pointLightColors[] = {
     glm::vec3(0.918f, 0.667f, 0.000f),
     glm::vec3(0.9568f, 0.211f, 0.298f),
@@ -360,6 +361,8 @@ int main()
     Shader lightSourceShader("D:/FirstOpenGLTutorial/FirstOpenGL/lightSourceShader.vs",
         "D:/FirstOpenGLTutorial/FirstOpenGL/lightSourceShader.fs");
 
+    Shader modelShader("D:/FirstOpenGLTutorial/FirstOpenGL/model.vs", "D:/FirstOpenGLTutorial/FirstOpenGL/model.fs");
+
     // must use shader program first to set uniforms
     lightingShader.use();
 
@@ -401,6 +404,9 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    char filePath[] = "D:/FirstOpenGLTutorial/FirstOpenGL/Resources/backpack/backpack.obj";
+    Model backpackModel(filePath);
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); wireframe mode
     // render loop!- iteration of render loop called a FRAME
@@ -447,15 +453,15 @@ int main()
 
         // we now draw as many light bulbs as we have point lights.
         glBindVertexArray(lightSourceVAO);
-        for (unsigned int i = 0; i < 4; i++)
-        {
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, pointLightPositions[i]);
-            model = glm::scale(model, glm::vec3(0.2f)); // Make it a smaller cube
-            lightSourceShader.setMat("model", model);
-            lightSourceShader.setInt("lightIndex", i);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
+        //for (unsigned int i = 0; i < 4; i++)
+        //{
+        //    model = glm::mat4(1.0f);
+        //    model = glm::translate(model, pointLightPositions[i]);
+        //    model = glm::scale(model, glm::vec3(0.2f)); // Make it a smaller cube
+        //    lightSourceShader.setMat("model", model);
+        //    lightSourceShader.setInt("lightIndex", i);
+        //    glDrawArrays(GL_TRIANGLES, 0, 36);
+        //}
 
 
 
@@ -535,17 +541,27 @@ int main()
 
         glBindVertexArray(lightObjectVAO);
 
-        for (unsigned int i = 0; i < 10; i++)
-        {
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, cubePositions[i]);
-            float angle = i * 20.0f * glfwGetTime();
-            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            lightingShader.setMat("model", model);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-            
-        }
+        //for (unsigned int i = 0; i < 10; i++)
+        //{
+        //    glm::mat4 model = glm::mat4(1.0f);
+        //    model = glm::translate(model, cubePositions[i]);
+        //    float angle = i * 20.0f * glfwGetTime();
+        //    model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+        //    lightingShader.setMat("model", model);
+        //    glDrawArrays(GL_TRIANGLES, 0, 36);
+        //    
+        //}
 
+        // keep in mind, this model fs&vs shader program setup for the model loading specifically
+        modelShader.use();
+        modelShader.setMat("projection", projection);
+        modelShader.setMat("view", view);
+        glm::mat4 model5 = glm::mat4(1.0f);
+        model5 = glm::translate(model5, glm::vec3(0.0f, 0.0f, 0.0f));
+        //model5 = glm::scale(model5, glm::vec3(1.0f, 1.0f, 1.0f)); // scale down
+        modelShader.setMat("model", model5);
+        backpackModel.Draw(modelShader);
+        
         // CHECK AND CALL EVENTS AND SWAP BUFFERS:
         // swap color buffer used torender and show as ouput to screen
         // double buffering to prevent artifacts. front buffer is final output, rendering ccmds draw to back buffer
