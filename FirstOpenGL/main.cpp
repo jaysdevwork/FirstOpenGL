@@ -361,12 +361,14 @@ int main()
     Shader lightSourceShader("D:/FirstOpenGLTutorial/FirstOpenGL/lightSourceShader.vs",
         "D:/FirstOpenGLTutorial/FirstOpenGL/lightSourceShader.fs");
 
-    Shader modelShader("D:/FirstOpenGLTutorial/FirstOpenGL/model.vs", "D:/FirstOpenGLTutorial/FirstOpenGL/model.fs");
+    //Shader modelShader("D:/FirstOpenGLTutorial/FirstOpenGL/model.vs", "D:/FirstOpenGLTutorial/FirstOpenGL/model.fs");
+    Shader modelShader("D:/FirstOpenGLTutorial/FirstOpenGL/model_lit.vs", "D:/FirstOpenGLTutorial/FirstOpenGL/model_lit.fs");
+
 
     // must use shader program first to set uniforms
     lightingShader.use();
 
-    lightingShader.setInt("material.diffuse", 0); // set texture unit
+    lightingShader.setInt("material.diffuse", 0); // IMPORTANT: set texture unit to tie it to sampler2d in frag shader, later bind actual texture by activating texture unit in draw
     lightingShader.setInt("material.specular", 1);
     lightingShader.setInt("material.emission", 2);
     lightingShader.setFloat("material.shininess", 64.0f); // radius of specular highlight
@@ -405,10 +407,12 @@ int main()
     glEnable(GL_DEPTH_TEST);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-    char filePath[] = "D:/FirstOpenGLTutorial/FirstOpenGL/Resources/backpack/backpack.obj";
-    Model backpackModel(filePath);
+    char filePath[] = "D:/FirstOpenGLTutorial/FirstOpenGL/Resources/staff/FrierensStaff.obj";
+    Model staffModel(filePath);
+    modelShader.use();
+    Bounds bounds = staffModel.GetBounds();
 
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); wireframe mode
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); //wireframe mode
     // render loop!- iteration of render loop called a FRAME
     // so app keeps drawing images and handle input until told to stop
     while (!glfwWindowShouldClose(window)) // checks if glfw has been told to close
@@ -448,20 +452,20 @@ int main()
         
         // projection matrix
         glm::mat4 projection;
-        projection = glm::perspective(glm::radians(camera.Zoom), 800.0f/600.0f, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(camera.Zoom), 800.0f/600.0f, 0.1f, 100.0f); // 0.1 near plane, 100.0f far plane
         lightSourceShader.setMat("projection", projection);
 
         // we now draw as many light bulbs as we have point lights.
         glBindVertexArray(lightSourceVAO);
-        //for (unsigned int i = 0; i < 4; i++)
-        //{
-        //    model = glm::mat4(1.0f);
-        //    model = glm::translate(model, pointLightPositions[i]);
-        //    model = glm::scale(model, glm::vec3(0.2f)); // Make it a smaller cube
-        //    lightSourceShader.setMat("model", model);
-        //    lightSourceShader.setInt("lightIndex", i);
-        //    glDrawArrays(GL_TRIANGLES, 0, 36);
-        //}
+        for (unsigned int i = 0; i < 4; i++)
+        {
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, pointLightPositions[i]);
+            model = glm::scale(model, glm::vec3(0.2f)); // Make it a smaller cube
+            lightSourceShader.setMat("model", model);
+            lightSourceShader.setInt("lightIndex", i);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
 
 
 
@@ -541,26 +545,77 @@ int main()
 
         glBindVertexArray(lightObjectVAO);
 
-        //for (unsigned int i = 0; i < 10; i++)
-        //{
-        //    glm::mat4 model = glm::mat4(1.0f);
-        //    model = glm::translate(model, cubePositions[i]);
-        //    float angle = i * 20.0f * glfwGetTime();
-        //    model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-        //    lightingShader.setMat("model", model);
-        //    glDrawArrays(GL_TRIANGLES, 0, 36);
-        //    
-        //}
+        for (unsigned int i = 0; i < 10; i++)
+        {
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, cubePositions[i]);
+            float angle = i * 20.0f * glfwGetTime();
+            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            lightingShader.setMat("model", model);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+            
+        }
 
         // keep in mind, this model fs&vs shader program setup for the model loading specifically
         modelShader.use();
+        modelShader.setVec3("viewPos", camera.Position);
+        // directional light
+        modelShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+        modelShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+        modelShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+        modelShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+        // point light 1
+        modelShader.setVec3("pointLights[0].position", pointLightPositions[0]);
+        modelShader.setVec3("pointLights[0].ambient", pointLightColors[0] * 0.1f);
+        modelShader.setVec3("pointLights[0].diffuse", pointLightColors[0]);
+        modelShader.setVec3("pointLights[0].specular", pointLightColors[0]);
+        modelShader.setFloat("pointLights[0].constant", 1.0f);
+        modelShader.setFloat("pointLights[0].linear", 0.09f);
+        modelShader.setFloat("pointLights[0].quadratic", 0.032f);
+        // point light 2
+        modelShader.setVec3("pointLights[1].position", pointLightPositions[1]);
+        modelShader.setVec3("pointLights[1].ambient", pointLightColors[1] * 0.1f);
+        modelShader.setVec3("pointLights[1].diffuse", pointLightColors[1]);
+        modelShader.setVec3("pointLights[1].specular", pointLightColors[1]);
+        modelShader.setFloat("pointLights[1].constant", 1.0f);
+        modelShader.setFloat("pointLights[1].linear", 0.09f);
+        modelShader.setFloat("pointLights[1].quadratic", 0.032f);
+        // point light 3
+        modelShader.setVec3("pointLights[2].position", pointLightPositions[2]);
+        modelShader.setVec3("pointLights[2].ambient", pointLightColors[2] * 0.1f);
+        modelShader.setVec3("pointLights[2].diffuse", pointLightColors[2]);
+        modelShader.setVec3("pointLights[2].specular", pointLightColors[2]);
+        modelShader.setFloat("pointLights[2].constant", 1.0f);
+        modelShader.setFloat("pointLights[2].linear", 0.09f);
+        modelShader.setFloat("pointLights[2].quadratic", 0.032f);
+        // point light 4
+        modelShader.setVec3("pointLights[3].position", pointLightPositions[3]);
+        modelShader.setVec3("pointLights[3].ambient", pointLightColors[3] * 0.1f);
+        modelShader.setVec3("pointLights[3].diffuse", pointLightColors[3]);
+        modelShader.setVec3("pointLights[3].specular", pointLightColors[3]);
+        modelShader.setFloat("pointLights[3].constant", 1.0f);
+        modelShader.setFloat("pointLights[3].linear", 0.09f);
+        modelShader.setFloat("pointLights[3].quadratic", 0.032f);
+
         modelShader.setMat("projection", projection);
         modelShader.setMat("view", view);
         glm::mat4 model5 = glm::mat4(1.0f);
-        model5 = glm::translate(model5, glm::vec3(0.0f, 0.0f, 0.0f));
+        model5 = glm::translate(model5, glm::vec3(0.0f, -2.0f, 0.0f));
         //model5 = glm::scale(model5, glm::vec3(1.0f, 1.0f, 1.0f)); // scale down
         modelShader.setMat("model", model5);
-        backpackModel.Draw(modelShader);
+
+        /// FOR REVEAL EFFECT
+        modelShader.setVec3("modelCenter", glm::vec3(model5* glm::vec4(bounds.center, 1.0f)));
+        modelShader.setFloat("maxModelRadius", bounds.radius); // UNSCALED
+        float pt1RevealSpeed = 0.2f;
+        float effectTime = currentFrame; // Time since effect started
+        float revealProgress = effectTime * pt1RevealSpeed;
+        modelShader.setFloat("revealProgress", revealProgress);
+        modelShader.setFloat("revealPt1Speed", pt1RevealSpeed);
+        modelShader.setFloat("ftime", effectTime);
+        /// END FOR REVEAL EFFECT
+
+        staffModel.Draw(modelShader);
         
         // CHECK AND CALL EVENTS AND SWAP BUFFERS:
         // swap color buffer used torender and show as ouput to screen

@@ -60,5 +60,7 @@
     <None Include="lightSourceShader.vs" />
     <None Include="model.vs" />
     <None Include="model.fs" />
+    <None Include="model_lit.fs" />
+    <None Include="model_lit.vs" />
   </ItemGroup>
 </Project>

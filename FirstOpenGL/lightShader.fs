@@ -64,6 +64,16 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 
 vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 
+float near = 0.1;
+float far = 100.0;
+
+// transform non-linear depth in screen space to linear depth value
+float LinearizeDepth(float depth)
+{
+    float z = depth * 2.0 - 1.0; // back to ndc -1 to 1
+    return (2.0 * near * far) / (far + near - z * (far - near)); // inverse non-linear equation
+}
+
 void main()
 {
 	// properties
@@ -80,7 +90,10 @@ void main()
 	// phase 3: Spot light
 	result += CalcSpotLight(spotLight, norm, FragPos, viewDir);
 
-	FragColor = vec4(result, 1.0);
+	//FragColor = vec4(result, 1.0);
+    float depth = LinearizeDepth(gl_FragCoord.z) / far; // convert to range 0,1
+    FragColor = vec4(vec3(depth), 1.0);
+    
 
 }
 

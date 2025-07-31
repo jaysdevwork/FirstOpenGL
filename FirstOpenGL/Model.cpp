@@ -22,6 +22,9 @@ void Model::loadModel(std::string path)
 	}
 	directory = path.substr(0, path.find_last_of('/'));
 	processNode(scene->mRootNode, scene);
+
+	// Calculate bounds for model once all verts have been collected in processing
+	this->modelCenter = CalculateBounds(this->vertPositions);
 }
 
 void Model::processNode(aiNode* node, const aiScene* scene)
@@ -47,6 +50,7 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
 	std::vector<Texture> textures;
+	Material material;
 
 	// Process vertices
 	for (unsigned int i = 0; i < mesh->mNumVertices; i++)
@@ -82,6 +86,9 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
 			vertex.TexCoords = glm::vec2(0.0f, 0.0f);
 		}
 
+		// Collect mesh vertex positions for center calculation
+		this->vertPositions.push_back(vertex.Position); // this not necessary but makes clear we referring to member variable
+
 		vertices.push_back(vertex);
 	}
 
@@ -98,17 +105,19 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
 	// Process material (MOVED OUTSIDE the vertices loop)
 	if (mesh->mMaterialIndex >= 0)
 	{
-		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+		aiMaterial* material_as = scene->mMaterials[mesh->mMaterialIndex];
 
-		std::vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+		std::vector<Texture> diffuseMaps = loadMaterialTextures(material_as, aiTextureType_DIFFUSE, "texture_diffuse");
 		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 
-		std::vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
+		std::vector<Texture> specularMaps = loadMaterialTextures(material_as, aiTextureType_SPECULAR, "texture_specular");
 		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+
+		material = loadMaterial(material_as);
 	}
 
 	// Return the mesh (MOVED OUTSIDE all loops)
-	return Mesh(vertices, indices, textures);
+	return Mesh(vertices, indices, textures, material);
 }
 
 std::vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName)
@@ -187,4 +196,74 @@ unsigned int Model::TextureFromFile(const char* path, const std::string& directo
 		stbi_image_free(data);
 	}
 	return textureID;
+}
+
+Material Model::loadMaterial(aiMaterial* mat)
+{
+	Material material; // Already has default values from constructor
+	aiColor3D color;
+	float value;
+
+	// Get diffuse color (Kd in MTL)
+	if (mat->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS)
+	{
+		material.diffuse = glm::vec3(color.r, color.g, color.b);
+	}
+
+	// Get ambient color (Ka in MTL)
+	if (mat->Get(AI_MATKEY_COLOR_AMBIENT, color) == AI_SUCCESS)
+	{
+		material.ambient = glm::vec3(color.r, color.g, color.b);
+	}
+
+	// Get specular color (Ks in MTL)
+	if (mat->Get(AI_MATKEY_COLOR_SPECULAR, color) == AI_SUCCESS)
+	{
+		material.specular = glm::vec3(color.r, color.g, color.b);
+	}
+
+	// Get shininess (Ns in MTL)
+	if (mat->Get(AI_MATKEY_SHININESS, value) == AI_SUCCESS)
+	{
+		material.shininess = value;
+	}
+
+	// Get transparency/dissolve (d in MTL)
+	if (mat->Get(AI_MATKEY_OPACITY, value) == AI_SUCCESS)
+	{
+		material.opacity = value;
+	}
+
+	return material;
+}
+
+
+Bounds Model::CalculateBounds(std::vector<glm::vec3> vertPositions)
+{
+	if (vertPositions.empty()) {
+		return { glm::vec3(0.0f), 0.0f };
+	}
+
+	// Initialize min/max bounds with first vertex
+	glm::vec3 minBounds = vertPositions[0];
+	glm::vec3 maxBounds = vertPositions[0];
+
+	// Loop through all vertices to find min/max bounds
+	for (const auto& vertex : vertPositions) {
+		minBounds.x = std::min(minBounds.x, vertex.x);
+		minBounds.y = std::min(minBounds.y, vertex.y);
+		minBounds.z = std::min(minBounds.z, vertex.z);
+
+		maxBounds.x = std::max(maxBounds.x, vertex.x);
+		maxBounds.y = std::max(maxBounds.y, vertex.y);
+		maxBounds.z = std::max(maxBounds.z, vertex.z);
+	}
+
+	// Calculate center as average of min/max bounds
+	glm::vec3 center = (minBounds + maxBounds) * 0.5f;
+
+	// Calculate radius as distance from center to farthest corner of bounding box
+	float radius = glm::length(maxBounds - center);
+
+	return { center, radius };
 }
