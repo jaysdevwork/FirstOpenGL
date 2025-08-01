@@ -159,6 +159,96 @@ void processInput(GLFWwindow* window)
 
 }
 
+void DrawBoxes(Shader& lightingShader, glm::mat4& view, glm::mat4& projection, unsigned int diffuseTexture, unsigned int specularTexture, unsigned int lightObjectVAO, glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f))
+{
+    lightingShader.use();
+    lightingShader.setVec3("viewPos", camera.Position);
+    lightingShader.setFloat("material.shininess", 32.0f);
+
+    /*
+       Here we set all the uniforms for the 5/6 types of lights we have. We have to set them manually and index
+       the proper PointLight struct in the array to set each uniform variable. This can be done more code-friendly
+       by defining light types as classes and set their values in there, or by using a more efficient uniform approach
+       by using 'Uniform buffer objects', but that is something we'll discuss in the 'Advanced GLSL' tutorial.
+    */
+    // directional light
+    lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+    lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+    lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+    lightingShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+    // point light 1
+    lightingShader.setVec3("pointLights[0].position", pointLightPositions[0]);
+    lightingShader.setVec3("pointLights[0].ambient", pointLightColors[0] * 0.1f);
+    lightingShader.setVec3("pointLights[0].diffuse", pointLightColors[0]);
+    lightingShader.setVec3("pointLights[0].specular", pointLightColors[0]);
+    lightingShader.setFloat("pointLights[0].constant", 1.0f);
+    lightingShader.setFloat("pointLights[0].linear", 0.09f);
+    lightingShader.setFloat("pointLights[0].quadratic", 0.032f);
+    // point light 2
+    lightingShader.setVec3("pointLights[1].position", pointLightPositions[1]);
+    lightingShader.setVec3("pointLights[1].ambient", pointLightColors[1] * 0.1f);
+    lightingShader.setVec3("pointLights[1].diffuse", pointLightColors[1]);
+    lightingShader.setVec3("pointLights[1].specular", pointLightColors[1]);
+    lightingShader.setFloat("pointLights[1].constant", 1.0f);
+    lightingShader.setFloat("pointLights[1].linear", 0.09f);
+    lightingShader.setFloat("pointLights[1].quadratic", 0.032f);
+    // point light 3
+    lightingShader.setVec3("pointLights[2].position", pointLightPositions[2]);
+    lightingShader.setVec3("pointLights[2].ambient", pointLightColors[2] * 0.1f);
+    lightingShader.setVec3("pointLights[2].diffuse", pointLightColors[2]);
+    lightingShader.setVec3("pointLights[2].specular", pointLightColors[2]);
+    lightingShader.setFloat("pointLights[2].constant", 1.0f);
+    lightingShader.setFloat("pointLights[2].linear", 0.09f);
+    lightingShader.setFloat("pointLights[2].quadratic", 0.032f);
+    // point light 4
+    lightingShader.setVec3("pointLights[3].position", pointLightPositions[3]);
+    lightingShader.setVec3("pointLights[3].ambient", pointLightColors[3] * 0.1f);
+    lightingShader.setVec3("pointLights[3].diffuse", pointLightColors[3]);
+    lightingShader.setVec3("pointLights[3].specular", pointLightColors[3]);
+    lightingShader.setFloat("pointLights[3].constant", 1.0f);
+    lightingShader.setFloat("pointLights[3].linear", 0.09f);
+    lightingShader.setFloat("pointLights[3].quadratic", 0.032f);
+    // spotlight 
+    lightingShader.setVec3("spotLight.position", camera.Position);
+    lightingShader.setVec3("spotLight.direction", camera.Front);
+    lightingShader.setVec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
+    lightingShader.setVec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
+    lightingShader.setVec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
+    lightingShader.setFloat("spotLight.constant", 1.0f);
+    lightingShader.setFloat("spotLight.linear", 0.09f);
+    lightingShader.setFloat("spotLight.quadratic", 0.032f);
+    lightingShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
+    lightingShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
+
+    // camera/view matrix
+    lightingShader.setMat("view", view);
+
+    // projection matrix
+    lightingShader.setMat("projection", projection);
+
+    glActiveTexture(GL_TEXTURE0); // activate texture unit first before binding texture
+    glBindTexture(GL_TEXTURE_2D, diffuseTexture);
+
+    glActiveTexture(GL_TEXTURE1); // activate texture unit first before binding texture
+    glBindTexture(GL_TEXTURE_2D, specularTexture);
+
+    //glActiveTexture(GL_TEXTURE2); // activate texture unit first before binding texture
+    //glBindTexture(GL_TEXTURE_2D, emissionTexture);
+
+    glBindVertexArray(lightObjectVAO);
+
+    for (unsigned int i = 0; i < 10; i++)
+    {
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, cubePositions[i]);
+        float angle = i * 20.0f * glfwGetTime();
+        model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+        model = glm::scale(model, scale);
+        lightingShader.setMat("model", model);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+    }
+}
 
 int main()
 {
@@ -364,6 +454,9 @@ int main()
     //Shader modelShader("D:/FirstOpenGLTutorial/FirstOpenGL/model.vs", "D:/FirstOpenGLTutorial/FirstOpenGL/model.fs");
     Shader modelShader("D:/FirstOpenGLTutorial/FirstOpenGL/model_lit.vs", "D:/FirstOpenGLTutorial/FirstOpenGL/model_lit.fs");
 
+    Shader borderShader("D:/FirstOpenGLTutorial/FirstOpenGL/lightShader.vs",
+        "D:/FirstOpenGLTutorial/FirstOpenGL/singleColor.fs");
+
 
     // must use shader program first to set uniforms
     lightingShader.use();
@@ -404,7 +497,6 @@ int main()
     glEnableVertexAttribArray(0);
     glBindVertexArray(0); 
 
-    glEnable(GL_DEPTH_TEST);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     char filePath[] = "D:/FirstOpenGLTutorial/FirstOpenGL/Resources/staff/FrierensStaff.obj";
@@ -433,11 +525,16 @@ int main()
         // RENDERING COMMANDS HERE:
         // clear screens color buffer at START of frame
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f); // whenever call glClear, filled with color configured here. STATE-SETTING
+
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_STENCIL_TEST);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
         
         //clear depth and color buffers beach each rendering iteration, otherwise info from previous frame stays in buffer
         // bitwise flag used to combine into one value
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // specifcied color buffer. STATE-USING (uses curr state to retrieve clearing color from)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); // specifcied color buffer. STATE-USING (uses curr state to retrieve clearing color from)
 
+        glStencilMask(0x00); // make sure we don't update the stencil buffer while drawing anything besides boxes being outlined
 
         // activate program. every rendering call after will now use this program
         // object and thus the shaders
@@ -468,94 +565,26 @@ int main()
         }
 
 
+        // By using the stencil buffer we can thus discard certain fragments based on the fragments of other drawn objects in the scene.//
 
-        lightingShader.use();
-        lightingShader.setVec3("viewPos", camera.Position);
-        lightingShader.setFloat("material.shininess", 32.0f);
+        // update stencil buffer with 1s wherever containers are drawn. CAN ONLY RENDER FRAGS WHERE WE DRAW GEOMETRY, thus 1s where container is.
+        glStencilFunc(GL_ALWAYS, 1, 0xFF); // compare all bits, always pass 
+        glStencilMask(0xFF); // write to all bits. where each frag has 8 bits ( 2^8 is up to 255)
+        DrawBoxes(lightingShader, view, projection, diffuseTexture, specularTexture, lightObjectVAO);
 
-        /*
-           Here we set all the uniforms for the 5/6 types of lights we have. We have to set them manually and index
-           the proper PointLight struct in the array to set each uniform variable. This can be done more code-friendly
-           by defining light types as classes and set their values in there, or by using a more efficient uniform approach
-           by using 'Uniform buffer objects', but that is something we'll discuss in the 'Advanced GLSL' tutorial.
-        */
-        // directional light
-        lightingShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-        lightingShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
-        lightingShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
-        lightingShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
-        // point light 1
-        lightingShader.setVec3("pointLights[0].position", pointLightPositions[0]);
-        lightingShader.setVec3("pointLights[0].ambient", pointLightColors[0] * 0.1f);
-        lightingShader.setVec3("pointLights[0].diffuse", pointLightColors[0]);
-        lightingShader.setVec3("pointLights[0].specular", pointLightColors[0]);
-        lightingShader.setFloat("pointLights[0].constant", 1.0f);
-        lightingShader.setFloat("pointLights[0].linear", 0.09f);
-        lightingShader.setFloat("pointLights[0].quadratic", 0.032f);
-        // point light 2
-        lightingShader.setVec3("pointLights[1].position", pointLightPositions[1]);
-        lightingShader.setVec3("pointLights[1].ambient", pointLightColors[1] * 0.1f);
-        lightingShader.setVec3("pointLights[1].diffuse", pointLightColors[1]);
-        lightingShader.setVec3("pointLights[1].specular", pointLightColors[1]);
-        lightingShader.setFloat("pointLights[1].constant", 1.0f);
-        lightingShader.setFloat("pointLights[1].linear", 0.09f);
-        lightingShader.setFloat("pointLights[1].quadratic", 0.032f);
-        // point light 3
-        lightingShader.setVec3("pointLights[2].position", pointLightPositions[2]);
-        lightingShader.setVec3("pointLights[2].ambient", pointLightColors[2] * 0.1f);
-        lightingShader.setVec3("pointLights[2].diffuse", pointLightColors[2]);
-        lightingShader.setVec3("pointLights[2].specular", pointLightColors[2]);
-        lightingShader.setFloat("pointLights[2].constant", 1.0f);
-        lightingShader.setFloat("pointLights[2].linear", 0.09f);
-        lightingShader.setFloat("pointLights[2].quadratic", 0.032f);
-        // point light 4
-        lightingShader.setVec3("pointLights[3].position", pointLightPositions[3]);
-        lightingShader.setVec3("pointLights[3].ambient", pointLightColors[3] * 0.1f);
-        lightingShader.setVec3("pointLights[3].diffuse", pointLightColors[3]);
-        lightingShader.setVec3("pointLights[3].specular", pointLightColors[3]);
-        lightingShader.setFloat("pointLights[3].constant", 1.0f);
-        lightingShader.setFloat("pointLights[3].linear", 0.09f);
-        lightingShader.setFloat("pointLights[3].quadratic", 0.032f);
-        // spotlight 
-        lightingShader.setVec3("spotLight.position", camera.Position);
-        lightingShader.setVec3("spotLight.direction", camera.Front);
-        lightingShader.setVec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
-        lightingShader.setVec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
-        lightingShader.setVec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
-        lightingShader.setFloat("spotLight.constant", 1.0f);
-        lightingShader.setFloat("spotLight.linear", 0.09f);
-        lightingShader.setFloat("spotLight.quadratic", 0.032f);
-        lightingShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
-        lightingShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
+        glStencilFunc(GL_NOTEQUAL, 1, 0xFF); // draw only parts of container not equal to 1, discard these frags
+        glStencilMask(0x00); // disable writing to the stencil buffer, maintaing its content 
+        glDisable(GL_DEPTH_TEST);  //  render above everything PREVIOUSLY drawn
+        // only draw where stencil values are 0 on this container geometry. CAN ONLY RENDER FRAGS WHERE WE DRAW GEOMETRY!
+        // these outline stencil values (outside original container) are 0 bc they were never updated/ are considered apart of the background with writing disabled
+        DrawBoxes(borderShader, view, projection, diffuseTexture, specularTexture, lightObjectVAO, glm::vec3(1.5f, 1.5f, 1.5f));
 
-        // camera/view matrix
-        lightingShader.setMat("view", view);
+        // restore normal rendering state
+        glStencilMask(0xFF); // allow writing to all 8 bits
+        glStencilFunc(GL_ALWAYS, 1, 0xFF); // always pass test to draw fragments, no discard
+        glEnable(GL_DEPTH_TEST);
 
-        // projection matrix
-        lightingShader.setMat("projection", projection);
-
-        glActiveTexture(GL_TEXTURE0); // activate texture unit first before binding texture
-        glBindTexture(GL_TEXTURE_2D, diffuseTexture);
-
-        glActiveTexture(GL_TEXTURE1); // activate texture unit first before binding texture
-        glBindTexture(GL_TEXTURE_2D, specularTexture);
-
-        glActiveTexture(GL_TEXTURE2); // activate texture unit first before binding texture
-        glBindTexture(GL_TEXTURE_2D, emissionTexture);
-
-        glBindVertexArray(lightObjectVAO);
-
-        for (unsigned int i = 0; i < 10; i++)
-        {
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, cubePositions[i]);
-            float angle = i * 20.0f * glfwGetTime();
-            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-            lightingShader.setMat("model", model);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-            
-        }
-
+        
         // keep in mind, this model fs&vs shader program setup for the model loading specifically
         modelShader.use();
         modelShader.setVec3("viewPos", camera.Position);
