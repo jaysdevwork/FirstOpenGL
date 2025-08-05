@@ -63,5 +63,7 @@
     <None Include="model_lit.fs" />
     <None Include="model_lit.vs" />
     <None Include="singleColor.fs" />
+    <None Include="grass.vs" />
+    <None Include="grass.fs" />
   </ItemGroup>
 </Project>

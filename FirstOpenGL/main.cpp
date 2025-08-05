@@ -3,6 +3,7 @@
 #include <glad/glad.h> 
 #include <GLFW/glfw3.h> // gives bare necessities for rendering to screen
 #include <iostream>
+#include <vector>
 #include "Shader.h"
 #include "Camera.h"
 #include "stb_image.h"
@@ -26,6 +27,15 @@ glm::vec3 pointLightPositions[] = {
     glm::vec3(2.3f, -3.3f, -4.0f),
     glm::vec3(-4.0f,  2.0f, -12.0f),
     glm::vec3(0.0f,  0.0f, -3.0f)
+};
+
+std::vector<glm::vec3> grassPositions =
+{
+    glm::vec3(-1.5f,  0.0f, -0.48f),
+    glm::vec3(1.5f,  0.0f,  0.51f),
+    glm::vec3(0.0f,  0.0f,  0.7f),
+    glm::vec3(-0.3f,  0.0f, -2.3f),
+    glm::vec3(0.5f,  0.0f, -0.6f)
 };
 
 // unique vertices of rectangle
@@ -74,7 +84,6 @@ float uniqueVertices[] = {
     -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
 };
 
-
 glm::vec3 cubePositions[] = {
     glm::vec3(0.0f,  0.0f,  0.0f),
     glm::vec3(2.0f,  5.0f, -15.0f),
@@ -86,6 +95,17 @@ glm::vec3 cubePositions[] = {
     glm::vec3(1.5f,  2.0f, -2.5f),
     glm::vec3(1.5f,  0.2f, -1.5f),
     glm::vec3(-1.3f,  1.0f, -1.5f)
+};
+
+float transparentVertices[] = {
+    // positions         // texture Coords (swapped y coordinates because texture is flipped upside down)
+    0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+    0.0f, -0.5f,  0.0f,  0.0f,  1.0f,
+    1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+
+    0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
+    1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
+    1.0f,  0.5f,  0.0f,  1.0f,  0.0f
 };
 
 
@@ -250,6 +270,8 @@ void DrawBoxes(Shader& lightingShader, glm::mat4& view, glm::mat4& projection, u
     }
 }
 
+
+
 int main()
 {
     // Initialize glfw and configure it with windhowhint.
@@ -397,21 +419,35 @@ int main()
     }
     stbi_image_free(data5); // free image memory
 
+    unsigned int grassTexture;
+    glGenTextures(1, &grassTexture);
+    glBindTexture(GL_TEXTURE_2D, grassTexture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // linear interpolates between texel colors
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    int width3, height3, nrChannels3;
+    unsigned char* data6 = stbi_load("D:/FirstOpenGLTutorial/FirstOpenGL/Resources/grass.png", &width3, &height3, &nrChannels3, 0);
+    if (data6)
+    {
+        // generate texture with alpha channel
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width3, height3, 0, GL_RGBA, GL_UNSIGNED_BYTE, data6);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data6); // free image memory
+
+
     
-   
 
-    //// ALL OF THIS MUST COME AFTER INIT GLFW AND GLAD!!
-    //// create shader object: reads from disk, compiles, links, and checks for errors for vertex and fragment shaders
-    //// this encapsulates alot of code
-    //Shader ourShader("D:/FirstOpenGLTutorial/FirstOpenGL/shader.vs",
-    //    "D:/FirstOpenGLTutorial/FirstOpenGL/shader.fs");
-    //
-
+    //// ALL OF THIS MUST COME AFTER INIT GLFW AND GLAD!
     //// create a vertex array object to store configuration
-    //// i.e. vertex attribute config and which vbo to use
-    //unsigned int VAO;
-    //glGenVertexArrays(1, &VAO);
-    //glBindVertexArray(VAO); // to use vao, this point on bind corresponding VBOs and attribute points. then unbind for later use
+
 
     //// vertex buffer object for storing large num of vertices in GPU memory
     unsigned int VBO;
@@ -457,6 +493,11 @@ int main()
     Shader borderShader("D:/FirstOpenGLTutorial/FirstOpenGL/lightShader.vs",
         "D:/FirstOpenGLTutorial/FirstOpenGL/singleColor.fs");
 
+    Shader grassShader("D:/FirstOpenGLTutorial/FirstOpenGL/grass.vs",
+        "D:/FirstOpenGLTutorial/FirstOpenGL/grass.fs");
+
+    grassShader.use();
+    grassShader.setInt("texture1", 0); // set texture unit to 0, later in render loop decide what texture want binded
 
     // must use shader program first to set uniforms
     lightingShader.use();
@@ -497,12 +538,38 @@ int main()
     glEnableVertexAttribArray(0);
     glBindVertexArray(0); 
 
+    // rectangle 
+    unsigned int rectVAO; 
+    glGenVertexArrays(1, &rectVAO);
+    glBindVertexArray(rectVAO); // always bind vao first so it records the vbo attached to it
+
+    // setup vbo, vao rmbrs. DO THIS BEFORE SETTING ATTRIB POINTERS
+    unsigned int rectVBO;
+    glGenBuffers(1, &rectVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, rectVBO);
+    // copy vertex data into currently bound buffer memory
+    glBufferData(GL_ARRAY_BUFFER, sizeof(transparentVertices), transparentVertices, GL_STATIC_DRAW);
+
+    // pos
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    // text coord
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float))); // starts 3 floats after pos
+    glEnableVertexAttribArray(1);
+
+    // unbind vao when done with setup
+    glBindVertexArray(0);
+
+
+
+
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     char filePath[] = "D:/FirstOpenGLTutorial/FirstOpenGL/Resources/staff/FrierensStaff.obj";
     Model staffModel(filePath);
     modelShader.use();
     Bounds bounds = staffModel.GetBounds();
+
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); //wireframe mode
     // render loop!- iteration of render loop called a FRAME
@@ -643,8 +710,27 @@ int main()
         modelShader.setFloat("revealPt1Speed", pt1RevealSpeed);
         modelShader.setFloat("ftime", effectTime);
         /// END FOR REVEAL EFFECT
-
         staffModel.Draw(modelShader);
+
+
+
+        // draw grass
+        grassShader.use();
+        grassShader.setMat("projection", projection);
+        grassShader.setMat("view", view);
+
+        glActiveTexture(GL_TEXTURE0); // activate texture unit first before binding texture
+        glBindTexture(GL_TEXTURE_2D, grassTexture);
+
+        glBindVertexArray(rectVAO);
+        for (unsigned int i = 0; i < 4; i++)
+        {
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, grassPositions[i]);
+            grassShader.setMat("model", model);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
+
         
         // CHECK AND CALL EVENTS AND SWAP BUFFERS:
         // swap color buffer used torender and show as ouput to screen
