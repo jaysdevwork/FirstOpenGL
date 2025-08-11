@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h> // gives bare necessities for rendering to screen
 #include <iostream>
 #include <vector>
+#include <map>
 #include "Shader.h"
 #include "Camera.h"
 #include "stb_image.h"
@@ -429,7 +430,7 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     int width3, height3, nrChannels3;
-    unsigned char* data6 = stbi_load("D:/FirstOpenGLTutorial/FirstOpenGL/Resources/grass.png", &width3, &height3, &nrChannels3, 0);
+    unsigned char* data6 = stbi_load("D:/FirstOpenGLTutorial/FirstOpenGL/Resources/blending_transparent_window.png", &width3, &height3, &nrChannels3, 0);
     if (data6)
     {
         // generate texture with alpha channel
@@ -571,6 +572,9 @@ int main()
     Bounds bounds = staffModel.GetBounds();
 
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); //wireframe mode
     // render loop!- iteration of render loop called a FRAME
     // so app keeps drawing images and handle input until told to stop
@@ -588,6 +592,15 @@ int main()
 
         // INPUT:
         processInput(window);
+
+        // sort transparent windows before rendering
+        std::map<float, glm::vec3> sorted;
+        for (unsigned int i = 0; i < grassPositions.size(); i++)
+        {
+            float distance = glm::length(camera.Position - grassPositions[i]);
+            // distance key, position value. auto sorted from lowest to highest key (distance)
+            sorted[distance] = grassPositions[i];
+        }
 
         // RENDERING COMMANDS HERE:
         // clear screens color buffer at START of frame
@@ -637,14 +650,14 @@ int main()
         // update stencil buffer with 1s wherever containers are drawn. CAN ONLY RENDER FRAGS WHERE WE DRAW GEOMETRY, thus 1s where container is.
         glStencilFunc(GL_ALWAYS, 1, 0xFF); // compare all bits, always pass 
         glStencilMask(0xFF); // write to all bits. where each frag has 8 bits ( 2^8 is up to 255)
-        DrawBoxes(lightingShader, view, projection, diffuseTexture, specularTexture, lightObjectVAO);
+        //DrawBoxes(lightingShader, view, projection, diffuseTexture, specularTexture, lightObjectVAO);
 
         glStencilFunc(GL_NOTEQUAL, 1, 0xFF); // draw only parts of container not equal to 1, discard these frags
         glStencilMask(0x00); // disable writing to the stencil buffer, maintaing its content 
         glDisable(GL_DEPTH_TEST);  //  render above everything PREVIOUSLY drawn
         // only draw where stencil values are 0 on this container geometry. CAN ONLY RENDER FRAGS WHERE WE DRAW GEOMETRY!
         // these outline stencil values (outside original container) are 0 bc they were never updated/ are considered apart of the background with writing disabled
-        DrawBoxes(borderShader, view, projection, diffuseTexture, specularTexture, lightObjectVAO, glm::vec3(1.5f, 1.5f, 1.5f));
+        //DrawBoxes(borderShader, view, projection, diffuseTexture, specularTexture, lightObjectVAO, glm::vec3(1.5f, 1.5f, 1.5f));
 
         // restore normal rendering state
         glStencilMask(0xFF); // allow writing to all 8 bits
@@ -723,13 +736,17 @@ int main()
         glBindTexture(GL_TEXTURE_2D, grassTexture);
 
         glBindVertexArray(rectVAO);
-        for (unsigned int i = 0; i < 4; i++)
+
+        // reverse iterator to draw from farthest distance to nearest
+        for (std::map<float, glm::vec3>::reverse_iterator it = sorted.rbegin(); it != sorted.rend(); ++it)
         {
             model = glm::mat4(1.0f);
-            model = glm::translate(model, grassPositions[i]);
+            model = glm::translate(model, it->second);
             grassShader.setMat("model", model);
             glDrawArrays(GL_TRIANGLES, 0, 6);
+
         }
+
 
         
         // CHECK AND CALL EVENTS AND SWAP BUFFERS:
