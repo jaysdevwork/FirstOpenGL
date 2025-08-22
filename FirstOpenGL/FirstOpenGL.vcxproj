@@ -158,6 +158,8 @@
     <None Include="model.vs" />
     <None Include="model_lit.fs" />
     <None Include="model_lit.vs" />
+    <None Include="quad.fs" />
+    <None Include="quad.vs" />
     <None Include="shader.fs" />
     <None Include="shader.vs" />
     <None Include="singleColor.fs" />

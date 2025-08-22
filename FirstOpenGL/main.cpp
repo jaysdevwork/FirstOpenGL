@@ -14,6 +14,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+float effectStartTime = 0.0f; // Time when the effect started
 
 glm::vec3 pointLightColors[] = {
     glm::vec3(0.918f, 0.667f, 0.000f),
@@ -32,57 +33,64 @@ glm::vec3 pointLightPositions[] = {
 
 std::vector<glm::vec3> grassPositions =
 {
-    glm::vec3(-1.5f,  0.0f, -0.48f),
-    glm::vec3(1.5f,  0.0f,  0.51f),
-    glm::vec3(0.0f,  0.0f,  0.7f),
-    glm::vec3(-0.3f,  0.0f, -2.3f),
-    glm::vec3(0.5f,  0.0f, -0.6f)
+    glm::vec3(0.0f,  0.0f,  2.0f),     // In front of cube at (0,0,0)
+    glm::vec3(2.0f,  0.0f, -13.0f),   // In front of cube at (2,5,-15)
+    glm::vec3(-1.5f, 0.0f, -0.5f),    // In front of cube at (-1.5,-2.2,-2.5)
+    glm::vec3(-3.8f, 0.0f, -10.3f),   // In front of cube at (-3.8,-2,-12.3)
+    glm::vec3(2.4f,  0.0f, -1.5f)     // In front of cube at (2.4,-0.4,-3.5)
 };
 
 // unique vertices of rectangle
 float uniqueVertices[] = {
     // positions          // normals           // texture coords
-    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
-     0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
 
-    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   1.0f, 1.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,   0.0f, 0.0f,
+    // Back face
+    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f, // Bottom-left
+     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f, // top-right
+     0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 0.0f, // bottom-right
+     0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f, 1.0f, // top-right
+    -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 0.0f, // bottom-left
+    -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f, 1.0f, // top-left
 
-    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-    -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+    // Front face
+    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f, // bottom-left
+     0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 0.0f, // bottom-right
+     0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f, // top-right
+     0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f, 1.0f, // top-right
+    -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 1.0f, // top-left
+    -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f, 0.0f, // bottom-left
 
-     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
-     0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
+    // Left face
+    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f, // top-right
+    -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 1.0f, // top-left
+    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f, // bottom-left
+    -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 1.0f, // bottom-left
+    -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f, 0.0f, // bottom-right
+    -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f, 0.0f, // top-right
 
-    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
-     0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-     0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f,
-    -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f,
+    // Right face
+     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, // top-left
+     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f, // bottom-right
+     0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 1.0f, // top-right
+     0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 1.0f, // bottom-right
+     0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, // top-left
+     0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f, 0.0f, // bottom-left
 
-    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
-     0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-     0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
-    -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
-    -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f
+     // Bottom face
+     -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f, // top-right
+      0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 1.0f, // top-left
+      0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f, // bottom-left
+      0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f, 0.0f, // bottom-left
+     -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 0.0f, // bottom-right
+     -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f, 1.0f, // top-right
+
+     // Top face
+     -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f, // top-left
+      0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f, // bottom-right
+      0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 1.0f, // top-right
+      0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f, 0.0f, // bottom-right
+     -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 1.0f, // top-left
+     -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f  // bottom-left
 };
 
 glm::vec3 cubePositions[] = {
@@ -107,6 +115,18 @@ float transparentVertices[] = {
     0.0f,  0.5f,  0.0f,  0.0f,  0.0f,
     1.0f, -0.5f,  0.0f,  1.0f,  1.0f,
     1.0f,  0.5f,  0.0f,  1.0f,  0.0f
+};
+
+// pos in ndc
+float quadVertices[] = {
+    // positions   // texCoords
+    -1.0f,  1.0f,  0.0f, 1.0f,
+    -1.0f, -1.0f,  0.0f, 0.0f,
+     1.0f, -1.0f,  1.0f, 0.0f,
+
+    -1.0f,  1.0f,  0.0f, 1.0f,
+     1.0f, -1.0f,  1.0f, 0.0f,
+     1.0f,  1.0f,  1.0f, 1.0f
 };
 
 
@@ -162,6 +182,11 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 void processInput(GLFWwindow* window)
 {
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+    {
+        effectStartTime = glfwGetTime(); // Reset the effect start time
+    }
+
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     {
         glfwSetWindowShouldClose(window, true); // returns whether key currently being pressed
@@ -311,48 +336,6 @@ int main()
         return -1;
     }
 
-   
-    //// setup textures
-    //unsigned int texture[2];
-    //glGenTextures(2, texture); // generate two texture ids
-    //// just like other objects, bind so any subsequent texture commands config curr bound txture
-    //glBindTexture(GL_TEXTURE_2D, texture[0]);
-    //// set texture wrapping/filtering options on currently bound txture obj
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST); // option for txture filtering between mipmap levels
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // cant set mipmap filtering options as mag filter
-    //// LOAD IMAGE using stb_image library
-    //int width, height, nrChannels;
-    //unsigned char* data = stbi_load("C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/Resources/container.jpg", &width, &height, &nrChannels, 0);
-    //if (data)
-    //{
-    //    // generate texture
-    //    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    //    glGenerateMipmap(GL_TEXTURE_2D);
-    //} 
-    //else 
-    //{
-    //    std::cout << "Failed to load texture" << std::endl;
-    //}
-    //stbi_image_free(data); // free image memory
-
-    //// setup texture 2
-    //glBindTexture(GL_TEXTURE_2D, texture[1]);
-    //// set texture wrapping/filtering options on currently bound txture obj
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST); // option for txture filtering between mipmap levels
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); // cant set mipmap filtering options as mag filter
-    //// LOAD IMAGE 2
-    //stbi_set_flip_vertically_on_load(true); // flip y axis during image loading bc image has 0 for y as top
-    //unsigned char* data2 = stbi_load("C:/Users/jay/Documents/OpenGL/Projects/FirstOpenGL/FirstOpenGL/Resources/awesomeface.png", &width, &height, &nrChannels, 0);
-    //if (data2)
-    //{
-    //    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data2);
-    //    glGenerateMipmap(GL_TEXTURE_2D);
-    //}
-    //stbi_image_free(data2); // free image memory
 
     unsigned int diffuseTexture;
     glGenTextures(1, &diffuseTexture); // just like other objects, bind so any subsequent texture commands config curr bound txture
@@ -450,7 +433,8 @@ int main()
     //// create a vertex array object to store configuration
 
 
-    //// vertex buffer object for storing large num of vertices in GPU memory
+    // vertex buffer object for storing large num of vertices in GPU memory
+    // this can be here bc later vaos will remember which vbo was bound until this is unbinded
     unsigned int VBO;
     glGenBuffers(1, &VBO);
     // bind buffer to buffer type
@@ -497,8 +481,14 @@ int main()
     Shader grassShader("D:/FirstOpenGLTutorial/FirstOpenGL/grass.vs",
         "D:/FirstOpenGLTutorial/FirstOpenGL/grass.fs");
 
+    Shader quadShader("D:/FirstOpenGLTutorial/FirstOpenGL/quad.vs",
+        "D:/FirstOpenGLTutorial/FirstOpenGL/quad.fs");
+
     grassShader.use();
     grassShader.setInt("texture1", 0); // set texture unit to 0, later in render loop decide what texture want binded
+
+    quadShader.use();
+    quadShader.setInt("screenTexture", 0); // QUESTION: can resuse texture units across shader programs?
 
     // must use shader program first to set uniforms
     lightingShader.use();
@@ -542,7 +532,7 @@ int main()
     // rectangle 
     unsigned int rectVAO; 
     glGenVertexArrays(1, &rectVAO);
-    glBindVertexArray(rectVAO); // always bind vao first so it records the vbo attached to it
+    glBindVertexArray(rectVAO); //  bind vao first so it records the vbo attached to it. or create and bind vbo first
 
     // setup vbo, vao rmbrs. DO THIS BEFORE SETTING ATTRIB POINTERS
     unsigned int rectVBO;
@@ -557,9 +547,31 @@ int main()
     // text coord
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float))); // starts 3 floats after pos
     glEnableVertexAttribArray(1);
-
     // unbind vao when done with setup
     glBindVertexArray(0);
+
+
+    // quad
+    unsigned int quadVAO;
+    glGenVertexArrays(1, &quadVAO);
+    glBindVertexArray(quadVAO);
+
+    unsigned int quadVBO;
+    glGenBuffers(1, &quadVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+
+    // pos
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    // tex coord
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glBindVertexArray(0);
+
+
+
+
 
 
 
@@ -571,9 +583,45 @@ int main()
     modelShader.use();
     Bounds bounds = staffModel.GetBounds();
 
-
+    // blending
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // frame buffer setup
+    unsigned int framebuffer;
+    glGenFramebuffers(1, &framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+    // texture imag to be attached as color attachment to framebuffer
+    unsigned int textureColorbuffer;
+    glGenTextures(1, &textureColorbuffer);
+    glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 800, 600, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0); // unbind texture
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0); // attach it to current bound framebuffer object
+
+    // since wont be sampling depth and stencil buffers, using renderbuffer object
+    // create depth and stencil attachment rbo
+    unsigned int rbo;
+    glGenRenderbuffers(1, &rbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 800, 600);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // attach rbo to framebuffer object. both as depth and stencil attachment
+    
+    // check if framebuffer is complete
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    {
+        std::cout << "ERROR""FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); // unbind framebuffer
+
+    
+
+
+
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); //wireframe mode
     // render loop!- iteration of render loop called a FRAME
@@ -604,16 +652,18 @@ int main()
 
         // RENDERING COMMANDS HERE:
         // clear screens color buffer at START of frame
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f); // whenever call glClear, filled with color configured here. STATE-SETTING
 
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_STENCIL_TEST);
-        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-        
+        // ___________________ FIRST PASS __________________________
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f); // whenever call glClear, filled with color configured here. STATE-SETTING
         //clear depth and color buffers beach each rendering iteration, otherwise info from previous frame stays in buffer
         // bitwise flag used to combine into one value
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); // specifcied color buffer. STATE-USING (uses curr state to retrieve clearing color from)
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_STENCIL_TEST);
+        // _________________________________________________________
 
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
         glStencilMask(0x00); // make sure we don't update the stencil buffer while drawing anything besides boxes being outlined
 
         // activate program. every rendering call after will now use this program
@@ -645,24 +695,27 @@ int main()
         }
 
 
-        // By using the stencil buffer we can thus discard certain fragments based on the fragments of other drawn objects in the scene.//
+        glEnable(GL_CULL_FACE);
 
+        // By using the stencil buffer we can thus discard certain fragments based on the fragments of other drawn objects in the scene.//
         // update stencil buffer with 1s wherever containers are drawn. CAN ONLY RENDER FRAGS WHERE WE DRAW GEOMETRY, thus 1s where container is.
         glStencilFunc(GL_ALWAYS, 1, 0xFF); // compare all bits, always pass 
         glStencilMask(0xFF); // write to all bits. where each frag has 8 bits ( 2^8 is up to 255)
-        //DrawBoxes(lightingShader, view, projection, diffuseTexture, specularTexture, lightObjectVAO);
+        DrawBoxes(lightingShader, view, projection, diffuseTexture, specularTexture, lightObjectVAO);
 
         glStencilFunc(GL_NOTEQUAL, 1, 0xFF); // draw only parts of container not equal to 1, discard these frags
         glStencilMask(0x00); // disable writing to the stencil buffer, maintaing its content 
         glDisable(GL_DEPTH_TEST);  //  render above everything PREVIOUSLY drawn
         // only draw where stencil values are 0 on this container geometry. CAN ONLY RENDER FRAGS WHERE WE DRAW GEOMETRY!
         // these outline stencil values (outside original container) are 0 bc they were never updated/ are considered apart of the background with writing disabled
-        //DrawBoxes(borderShader, view, projection, diffuseTexture, specularTexture, lightObjectVAO, glm::vec3(1.5f, 1.5f, 1.5f));
+        DrawBoxes(borderShader, view, projection, diffuseTexture, specularTexture, lightObjectVAO, glm::vec3(1.1f, 1.1f, 1.1f));
 
         // restore normal rendering state
         glStencilMask(0xFF); // allow writing to all 8 bits
         glStencilFunc(GL_ALWAYS, 1, 0xFF); // always pass test to draw fragments, no discard
         glEnable(GL_DEPTH_TEST);
+
+        glDisable(GL_CULL_FACE);
 
         
         // keep in mind, this model fs&vs shader program setup for the model loading specifically
@@ -709,15 +762,15 @@ int main()
         modelShader.setMat("projection", projection);
         modelShader.setMat("view", view);
         glm::mat4 model5 = glm::mat4(1.0f);
-        model5 = glm::translate(model5, glm::vec3(0.0f, -2.0f, 0.0f));
+        model5 = glm::translate(model5, glm::vec3(-2.4f, -2.0f, 0.0f));
         //model5 = glm::scale(model5, glm::vec3(1.0f, 1.0f, 1.0f)); // scale down
         modelShader.setMat("model", model5);
 
         /// FOR REVEAL EFFECT
-        modelShader.setVec3("modelCenter", glm::vec3(model5* glm::vec4(bounds.center, 1.0f)));
+        modelShader.setVec3("modelCenter", glm::vec3(model5 * glm::vec4(bounds.center, 1.0f)));
         modelShader.setFloat("maxModelRadius", bounds.radius); // UNSCALED
         float pt1RevealSpeed = 0.2f;
-        float effectTime = currentFrame; // Time since effect started
+        float effectTime = currentFrame - effectStartTime; // Time since effect started (relative to reset)
         float revealProgress = effectTime * pt1RevealSpeed;
         modelShader.setFloat("revealProgress", revealProgress);
         modelShader.setFloat("revealPt1Speed", pt1RevealSpeed);
@@ -747,6 +800,18 @@ int main()
 
         }
 
+        // ___________________ SECOND PASS _________________________
+        glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default frame buffer that renders to screen
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // only visible if quad doesnt cover entire screen
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        quadShader.use();
+        glBindVertexArray(quadVAO);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_STENCIL_TEST);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
         
         // CHECK AND CALL EVENTS AND SWAP BUFFERS:

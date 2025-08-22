@@ -65,5 +65,7 @@
     <None Include="singleColor.fs" />
     <None Include="grass.vs" />
     <None Include="grass.fs" />
+    <None Include="quad.vs" />
+    <None Include="quad.fs" />
   </ItemGroup>
 </Project>
