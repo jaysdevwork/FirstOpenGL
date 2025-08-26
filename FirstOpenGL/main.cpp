@@ -618,6 +618,36 @@ int main()
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0); // unbind framebuffer
 
+    // second frame buffer setup for mirror
+    unsigned int framebuffer2;
+    glGenFramebuffers(1, &framebuffer2);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer2);
+
+    // color attachment texture imag
+    unsigned int textureColorbuffer2;
+    glGenTextures(1, &textureColorbuffer2);
+    glBindTexture(GL_TEXTURE_2D, textureColorbuffer2);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 200, 150, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer2, 0); // bind texture as color attachment on framebuffer
+
+    // create depth and stencil attachment rbo
+    unsigned int rbo2;
+    glGenRenderbuffers(1, &rbo2);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo2);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 200, 150);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo2); // bind render buffer object as depth and stencil attachment on framebuffer
+    
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    {
+        std::cout << "ERROR""FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); // unbind framebuffer
+
+
     
 
 
@@ -800,18 +830,190 @@ int main()
 
         }
 
-        // ___________________ SECOND PASS _________________________
-        glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default frame buffer that renders to screen
+        // ___________________ SECOND PASS __________________________
+        glViewport(0, 0, 200, 150);
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer2);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f); // whenever call glClear, filled with color configured here. STATE-SETTING
+        //clear depth and color buffers beach each rendering iteration, otherwise info from previous frame stays in buffer
+        // bitwise flag used to combine into one value
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); // specifcied color buffer. STATE-USING (uses curr state to retrieve clearing color from)
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_STENCIL_TEST);
+        // _________________________________________________________
+
+        // for back mirror view
+        camera.Yaw += 180.f;
+        camera.ProcessMouseMovement(0, 0, false);
+
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        glStencilMask(0x00); // make sure we don't update the stencil buffer while drawing anything besides boxes being outlined
+
+        // activate program. every rendering call after will now use this program
+        // object and thus the shaders
+        lightSourceShader.use();
+
+        // model matrix for light source cube
+        model = glm::mat4(1.0f);
+
+        // camera/view matrix
+        view = camera.GetViewMatrix();
+        lightSourceShader.setMat("view", view);
+
+        // projection matrix
+        projection = glm::perspective(glm::radians(camera.Zoom), 200.0f / 150.0f, 0.1f, 100.0f); // 0.1 near plane, 100.0f far plane
+        lightSourceShader.setMat("projection", projection);
+
+        // we now draw as many light bulbs as we have point lights.
+        glBindVertexArray(lightSourceVAO);
+        for (unsigned int i = 0; i < 4; i++)
+        {
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, pointLightPositions[i]);
+            model = glm::scale(model, glm::vec3(0.2f)); // Make it a smaller cube
+            lightSourceShader.setMat("model", model);
+            lightSourceShader.setInt("lightIndex", i);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
+
+        glEnable(GL_CULL_FACE);
+
+        // By using the stencil buffer we can thus discard certain fragments based on the fragments of other drawn objects in the scene.//
+        // update stencil buffer with 1s wherever containers are drawn. CAN ONLY RENDER FRAGS WHERE WE DRAW GEOMETRY, thus 1s where container is.
+        glStencilFunc(GL_ALWAYS, 1, 0xFF); // compare all bits, always pass 
+        glStencilMask(0xFF); // write to all bits. where each frag has 8 bits ( 2^8 is up to 255)
+        DrawBoxes(lightingShader, view, projection, diffuseTexture, specularTexture, lightObjectVAO);
+
+        glStencilFunc(GL_NOTEQUAL, 1, 0xFF); // draw only parts of container not equal to 1, discard these frags
+        glStencilMask(0x00); // disable writing to the stencil buffer, maintaing its content 
+        glDisable(GL_DEPTH_TEST);  //  render above everything PREVIOUSLY drawn
+        // only draw where stencil values are 0 on this container geometry. CAN ONLY RENDER FRAGS WHERE WE DRAW GEOMETRY!
+        // these outline stencil values (outside original container) are 0 bc they were never updated/ are considered apart of the background with writing disabled
+        DrawBoxes(borderShader, view, projection, diffuseTexture, specularTexture, lightObjectVAO, glm::vec3(1.1f, 1.1f, 1.1f));
+
+        // restore normal rendering state
+        glStencilMask(0xFF); // allow writing to all 8 bits
+        glStencilFunc(GL_ALWAYS, 1, 0xFF); // always pass test to draw fragments, no discard
+        glEnable(GL_DEPTH_TEST);
+
+        glDisable(GL_CULL_FACE);
+
+
+        // keep in mind, this model fs&vs shader program setup for the model loading specifically
+        modelShader.use();
+        modelShader.setVec3("viewPos", camera.Position);
+        // directional light
+        modelShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+        modelShader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+        modelShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+        modelShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+        // point light 1
+        modelShader.setVec3("pointLights[0].position", pointLightPositions[0]);
+        modelShader.setVec3("pointLights[0].ambient", pointLightColors[0] * 0.1f);
+        modelShader.setVec3("pointLights[0].diffuse", pointLightColors[0]);
+        modelShader.setVec3("pointLights[0].specular", pointLightColors[0]);
+        modelShader.setFloat("pointLights[0].constant", 1.0f);
+        modelShader.setFloat("pointLights[0].linear", 0.09f);
+        modelShader.setFloat("pointLights[0].quadratic", 0.032f);
+        // point light 2
+        modelShader.setVec3("pointLights[1].position", pointLightPositions[1]);
+        modelShader.setVec3("pointLights[1].ambient", pointLightColors[1] * 0.1f);
+        modelShader.setVec3("pointLights[1].diffuse", pointLightColors[1]);
+        modelShader.setVec3("pointLights[1].specular", pointLightColors[1]);
+        modelShader.setFloat("pointLights[1].constant", 1.0f);
+        modelShader.setFloat("pointLights[1].linear", 0.09f);
+        modelShader.setFloat("pointLights[1].quadratic", 0.032f);
+        // point light 3
+        modelShader.setVec3("pointLights[2].position", pointLightPositions[2]);
+        modelShader.setVec3("pointLights[2].ambient", pointLightColors[2] * 0.1f);
+        modelShader.setVec3("pointLights[2].diffuse", pointLightColors[2]);
+        modelShader.setVec3("pointLights[2].specular", pointLightColors[2]);
+        modelShader.setFloat("pointLights[2].constant", 1.0f);
+        modelShader.setFloat("pointLights[2].linear", 0.09f);
+        modelShader.setFloat("pointLights[2].quadratic", 0.032f);
+        // point light 4
+        modelShader.setVec3("pointLights[3].position", pointLightPositions[3]);
+        modelShader.setVec3("pointLights[3].ambient", pointLightColors[3] * 0.1f);
+        modelShader.setVec3("pointLights[3].diffuse", pointLightColors[3]);
+        modelShader.setVec3("pointLights[3].specular", pointLightColors[3]);
+        modelShader.setFloat("pointLights[3].constant", 1.0f);
+        modelShader.setFloat("pointLights[3].linear", 0.09f);
+        modelShader.setFloat("pointLights[3].quadratic", 0.032f);
+
+        modelShader.setMat("projection", projection);
+        modelShader.setMat("view", view);
+        model5 = glm::mat4(1.0f);
+        model5 = glm::translate(model5, glm::vec3(-2.4f, -2.0f, 0.0f));
+        //model5 = glm::scale(model5, glm::vec3(1.0f, 1.0f, 1.0f)); // scale down
+        modelShader.setMat("model", model5);
+
+        /// FOR REVEAL EFFECT
+        modelShader.setVec3("modelCenter", glm::vec3(model5 * glm::vec4(bounds.center, 1.0f)));
+        modelShader.setFloat("maxModelRadius", bounds.radius); // UNSCALED
+        pt1RevealSpeed = 0.2f;
+        effectTime = currentFrame - effectStartTime; // Time since effect started (relative to reset)
+        revealProgress = effectTime * pt1RevealSpeed;
+        modelShader.setFloat("revealProgress", revealProgress);
+        modelShader.setFloat("revealPt1Speed", pt1RevealSpeed);
+        modelShader.setFloat("ftime", effectTime);
+        /// END FOR REVEAL EFFECT
+        staffModel.Draw(modelShader);
+
+
+
+        // draw grass
+        grassShader.use();
+        grassShader.setMat("projection", projection);
+        grassShader.setMat("view", view);
+
+        glActiveTexture(GL_TEXTURE0); // activate texture unit first before binding texture
+        glBindTexture(GL_TEXTURE_2D, grassTexture);
+
+        glBindVertexArray(rectVAO);
+
+        // reverse iterator to draw from farthest distance to nearest
+        for (std::map<float, glm::vec3>::reverse_iterator it = sorted.rbegin(); it != sorted.rend(); ++it)
+        {
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, it->second);
+            grassShader.setMat("model", model);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        }
+
+        camera.Yaw -= 180.0f; // reset back to original oreintation
+        camera.ProcessMouseMovement(0, 0, true);
+
+
+        // ___________________ THIRD PASS _________________________
+        
+        glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default frame buffer that renders to screen. default fb managed by windowing system
+        glViewport(0, 0, 800, 600); // restore to normal viewport size
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // only visible if quad doesnt cover entire screen
         glClear(GL_COLOR_BUFFER_BIT);
 
+        
         quadShader.use();
+        glm::mat4 quadModel = glm::mat4(1.0f);
+        quadShader.setMat("model", quadModel);
         glBindVertexArray(quadVAO);
-        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_DEPTH_TEST); // quad should always render in front of everything else
         glDisable(GL_STENCIL_TEST);
+
+
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
         glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        quadModel = glm::translate(quadModel, glm::vec3(0.0f, 0.8f, 0.0f));
+        quadModel = glm::scale(quadModel, glm::vec3( 0.3f, 0.3f, 1.0f));
+        quadShader.setMat("model", quadModel);
+        
+                
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureColorbuffer2);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        // _________________________________________________________
 
         
         // CHECK AND CALL EVENTS AND SWAP BUFFERS:
